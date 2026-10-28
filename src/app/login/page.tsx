@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ShieldCheck, AlertCircle, Loader2 } from "lucide-react";
@@ -44,9 +45,14 @@ function LoginForm() {
     <div className="w-full max-w-md bg-[#FFFFFF] border border-[#E1E5DF] rounded p-8 sm:p-10 shadow-sm text-center">
       {/* Editorial Eyebrow & Brand */}
       <Link href="/" className="inline-block mb-3">
-        <span className="w-10 h-10 rounded bg-[#174C3C] text-white flex items-center justify-center font-bold text-base mx-auto shadow-sm">
-          H
-        </span>
+        <Image
+          src="/himalkom-logo.png"
+          alt="Logo HIMALKOM IPB"
+          width={56}
+          height={56}
+          className="mx-auto object-contain"
+          priority
+        />
       </Link>
       <span className="block text-[11px] font-semibold uppercase tracking-widest text-[#737A74]">
         Grand Survey HIMALKOM 2026

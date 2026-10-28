@@ -17,6 +17,11 @@ export const metadata: Metadata = {
   description: "Analisis Ketergantungan Mahasiswa Program Studi Ilmu Komputer IPB University Angkatan 62 terhadap Artificial Intelligence dalam Pembelajaran dan Aktivitas Akademik.",
   keywords: ["HIMALKOM", "IPB University", "Grand Survey 2026", "Ilmu Komputer", "AI Dependency", "Artificial Intelligence"],
   authors: [{ name: "HIMALKOM IPB University" }],
+  icons: {
+    icon: "/rnt-logo.png",
+    shortcut: "/rnt-logo.png",
+    apple: "/rnt-logo.png",
+  },
 };
 
 export const viewport: Viewport = {

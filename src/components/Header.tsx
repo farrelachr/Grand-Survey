@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/auth-validation";
 
@@ -14,8 +15,15 @@ export async function Header() {
     <header className="border-b border-[#E1E5DF] bg-[#FFFFFF] sticky top-0 z-40">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-8 h-8 rounded bg-[#174C3C] text-white flex items-center justify-center font-bold text-sm tracking-tight shadow-sm">
-            H
+          <div className="w-9 h-9 relative flex items-center justify-center shrink-0">
+            <Image
+              src="/himalkom-logo.png"
+              alt="Logo HIMALKOM IPB"
+              width={36}
+              height={36}
+              className="object-contain"
+              priority
+            />
           </div>
           <div className="flex flex-col">
             <span className="font-semibold text-sm tracking-tight text-[#202522] group-hover:text-[#174C3C] transition-colors">
