@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { AdminSyncRetry } from "@/components/AdminSyncRetry";
+import { AdminCharts } from "@/components/AdminCharts";
 import Link from "next/link";
 import {
   Download,
@@ -77,6 +78,11 @@ export default async function AdminDashboardPage() {
   }
 
   const totalSubmissions = submissions.length;
+  const hasGoogleSheetsConfig = Boolean(
+    process.env.GOOGLE_SHEETS_SPREADSHEET_ID &&
+    process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL &&
+    process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY
+  );
 
   // Real aggregate calculations
   let meanScore = 0;
@@ -193,105 +199,20 @@ export default async function AdminDashboardPage() {
                 </span>
               </p>
               <span className="text-[11px] text-[#737A74] mt-1 block">
-                Tersinkronisasi otomatis
+                {hasGoogleSheetsConfig
+                  ? "Tersinkronisasi otomatis"
+                  : "Belum dikonfigurasi (Gunakan Ekspor CSV)"}
               </span>
             </div>
           </div>
 
-          {/* Distribution Summaries */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Category breakdown */}
-            <div className="bg-[#FFFFFF] border border-[#E1E5DF] rounded p-6 shadow-sm">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-[#202522] mb-4 flex items-center gap-2">
-                <BarChart2 className="w-4 h-4 text-[#174C3C]" />
-                Distribusi Kategori Ketergantungan
-              </h2>
-              {totalSubmissions > 0 ? (
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-xs font-semibold mb-1">
-                      <span className="text-[#174C3C]">Rendah (0–33.33)</span>
-                      <span>
-                        {categoryCounts.RENDAH} mhs (
-                        {Math.round((categoryCounts.RENDAH / totalSubmissions) * 100)}%)
-                      </span>
-                    </div>
-                    <div className="w-full bg-[#E1E5DF] h-2 rounded-full overflow-hidden">
-                      <div
-                        className="bg-[#174C3C] h-full"
-                        style={{
-                          width: `${(categoryCounts.RENDAH / totalSubmissions) * 100}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-xs font-semibold mb-1">
-                      <span className="text-[#D5A85B]">Sedang (&gt;33.33–66.67)</span>
-                      <span>
-                        {categoryCounts.SEDANG} mhs (
-                        {Math.round((categoryCounts.SEDANG / totalSubmissions) * 100)}%)
-                      </span>
-                    </div>
-                    <div className="w-full bg-[#E1E5DF] h-2 rounded-full overflow-hidden">
-                      <div
-                        className="bg-[#D5A85B] h-full"
-                        style={{
-                          width: `${(categoryCounts.SEDANG / totalSubmissions) * 100}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-xs font-semibold mb-1">
-                      <span className="text-[#B42318]">Tinggi (&gt;66.67–100)</span>
-                      <span>
-                        {categoryCounts.TINGGI} mhs (
-                        {Math.round((categoryCounts.TINGGI / totalSubmissions) * 100)}%)
-                      </span>
-                    </div>
-                    <div className="w-full bg-[#E1E5DF] h-2 rounded-full overflow-hidden">
-                      <div
-                        className="bg-[#B42318] h-full"
-                        style={{
-                          width: `${(categoryCounts.TINGGI / totalSubmissions) * 100}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-xs text-[#737A74] italic">Belum ada respon yang tersimpan.</p>
-              )}
+          {/* Interactive Visual Charts */}
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart2 className="w-5 h-5 text-[#174C3C]" />
+              <h2 className="text-lg font-bold text-[#202522]">Visualisasi Grafik Agregat</h2>
             </div>
-
-            {/* AI Tools breakdown */}
-            <div className="bg-[#FFFFFF] border border-[#E1E5DF] rounded p-6 shadow-sm">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-[#202522] mb-4">
-                Alat AI Utama Paling Populer
-              </h2>
-              {totalSubmissions > 0 ? (
-                <div className="space-y-3">
-                  {Object.entries(primaryToolCounts)
-                    .sort((a, b) => b[1] - a[1])
-                    .map(([tool, count]) => (
-                      <div key={tool} className="flex items-center justify-between text-xs">
-                        <span className="font-medium text-[#202522]">{tool}</span>
-                        <div className="flex items-center gap-3">
-                          <span className="text-[#737A74] font-semibold">{count} suara</span>
-                          <span className="text-[11px] text-[#737A74] bg-[#F7F7F2] px-2 py-0.5 rounded font-mono">
-                            {Math.round((count / totalSubmissions) * 100)}%
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              ) : (
-                <p className="text-xs text-[#737A74] italic">Belum ada respon yang tersimpan.</p>
-              )}
-            </div>
+            <AdminCharts submissions={submissions} />
           </div>
 
           {/* Submissions Table with Pseudonymous IDs */}
@@ -358,13 +279,27 @@ export default async function AdminDashboardPage() {
                           </td>
                           <td className="py-3 px-2">
                             {syncInfo?.status === "synced" ? (
-                              <span className="text-[11px] text-[#174C3C] font-medium">Tersinkron</span>
+                              <span className="text-[11px] text-[#174C3C] font-semibold bg-[#EBF2EE] px-2 py-0.5 rounded">
+                                Tersinkron
+                              </span>
+                            ) : syncInfo?.error?.includes("not configured") ? (
+                              <span
+                                className="text-[11px] text-[#737A74] bg-[#F7F7F2] border border-[#E1E5DF] px-2 py-0.5 rounded"
+                                title="Kredensial Service Account Google Sheets belum diisi di .env.local"
+                              >
+                                Belum Dikonfigurasi
+                              </span>
                             ) : syncInfo?.status === "failed" ? (
-                              <span className="text-[11px] text-[#B42318] font-medium" title={syncInfo.error}>
-                                Gagal
+                              <span
+                                className="text-[11px] text-[#B42318] bg-[#FEE4E2] px-2 py-0.5 rounded font-medium cursor-help"
+                                title={syncInfo.error}
+                              >
+                                Gagal Sinkron
                               </span>
                             ) : (
-                              <span className="text-[11px] text-[#737A74]">Pending / Not Configured</span>
+                              <span className="text-[11px] text-[#737A74] bg-[#F7F7F2] px-2 py-0.5 rounded">
+                                Belum Dikonfigurasi
+                              </span>
                             )}
                           </td>
                           <td className="py-3 px-2 text-right">
