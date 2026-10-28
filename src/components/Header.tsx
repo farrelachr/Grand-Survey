@@ -29,14 +29,8 @@ export async function Header() {
 
         <nav className="flex items-center gap-4 sm:gap-6 text-sm">
           <Link
-            href="/methodology"
-            className="text-[#636B65] hover:text-[#174C3C] transition-colors font-medium text-xs sm:text-sm"
-          >
-            Metodologi
-          </Link>
-          <Link
             href="/privacy"
-            className="text-[#636B65] hover:text-[#174C3C] transition-colors font-medium text-xs sm:text-sm hidden sm:inline"
+            className="text-[#636B65] hover:text-[#174C3C] transition-colors font-medium text-xs sm:text-sm"
           >
             Privasi Data
           </Link>

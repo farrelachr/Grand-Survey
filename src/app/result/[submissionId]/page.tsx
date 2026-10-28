@@ -276,20 +276,12 @@ export default async function ResultPage({
           </div>
 
           {/* Action Footer Buttons */}
-          <div className="flex flex-wrap items-center justify-between gap-4 pt-4">
+          <div className="flex items-center justify-start pt-4">
             <Link
               href="/"
-              className="text-xs font-semibold text-[#174C3C] hover:underline"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#174C3C] bg-[#FFFFFF] border border-[#E1E5DF] px-4 py-2.5 rounded hover:bg-[#F7F7F2] transition-colors"
             >
               &larr; Kembali ke Halaman Utama
-            </Link>
-
-            <Link
-              href="/methodology"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#202522] bg-[#FFFFFF] border border-[#E1E5DF] px-4 py-2.5 rounded hover:bg-[#F7F7F2] transition-colors"
-            >
-              <span>Pelajari Kerangka Survei Lengkap</span>
-              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
         </div>

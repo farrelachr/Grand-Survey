@@ -9,16 +9,13 @@ export function Footer() {
             Himpunan Mahasiswa Ilmu Komputer (HIMALKOM) IPB University
           </p>
           <p className="mt-0.5">
-            Departemen Ilmu Komputer, Fakultas Matematika dan Ilmu Pengetahuan Alam, IPB University
+            Sekolah Sains Data Matematika dan Informatika
           </p>
         </div>
 
         <div className="flex items-center gap-5">
           <Link href="/privacy" className="hover:text-[#174C3C] transition-colors underline-offset-4 hover:underline">
             Kebijakan Privasi
-          </Link>
-          <Link href="/methodology" className="hover:text-[#174C3C] transition-colors underline-offset-4 hover:underline">
-            Dokumentasi Metodologi
           </Link>
           <span className="text-[#C4CCC1]">|</span>
           <span>Grand Survey 2026</span>
