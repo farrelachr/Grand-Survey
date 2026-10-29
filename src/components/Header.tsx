@@ -13,9 +13,9 @@ export async function Header() {
 
   return (
     <header className="border-b border-[#E1E5DF] bg-[#FFFFFF] sticky top-0 z-40">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-9 h-9 relative flex items-center justify-center shrink-0">
+      <div className="max-w-5xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2">
+        <Link href="/" className="flex items-center gap-2 sm:gap-3 group shrink-0">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 relative flex items-center justify-center shrink-0">
             <Image
               src="/himalkom-logo.png"
               alt="Logo HIMALKOM IPB"
@@ -26,19 +26,19 @@ export async function Header() {
             />
           </div>
           <div className="flex flex-col">
-            <span className="font-semibold text-sm tracking-tight text-[#202522] group-hover:text-[#174C3C] transition-colors">
+            <span className="font-semibold text-xs sm:text-sm tracking-tight text-[#202522] group-hover:text-[#174C3C] transition-colors whitespace-nowrap">
               HIMALKOM IPB
             </span>
-            <span className="text-[11px] text-[#737A74] tracking-wide uppercase font-medium">
+            <span className="text-[10px] sm:text-[11px] text-[#737A74] tracking-wide uppercase font-medium hidden sm:inline">
               Grand Survey 2026
             </span>
           </div>
         </Link>
 
-        <nav className="flex items-center gap-4 sm:gap-6 text-sm">
+        <nav className="flex items-center gap-2 sm:gap-4 md:gap-6 text-sm shrink-0">
           <Link
             href="/privacy"
-            className="text-[#636B65] hover:text-[#174C3C] transition-colors font-medium text-xs sm:text-sm"
+            className="text-[#636B65] hover:text-[#174C3C] transition-colors font-medium text-xs sm:text-sm hidden sm:inline whitespace-nowrap"
           >
             Privasi Data
           </Link>
@@ -46,32 +46,30 @@ export async function Header() {
           {isAdmin && (
             <Link
               href="/admin"
-              className="text-[#D5A85B] bg-[#FAF5EB] border border-[#D5A85B]/30 px-2.5 py-1 rounded text-xs font-semibold hover:bg-[#FAF5EB]/80 transition-colors"
+              className="text-[#D5A85B] bg-[#FAF5EB] border border-[#D5A85B]/30 px-2 py-1 sm:px-2.5 sm:py-1 rounded text-[11px] sm:text-xs font-semibold hover:bg-[#FAF5EB]/80 transition-colors whitespace-nowrap"
             >
               Panel Admin
             </Link>
           )}
 
           {user ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <span className="text-xs text-[#737A74] hidden md:inline truncate max-w-[160px]">
                 {user.email}
               </span>
-              <form action="/auth/signout" method="post">
-                <Link
-                  href="/survey"
-                  className="bg-[#174C3C] text-white px-3.5 py-1.5 rounded text-xs sm:text-sm font-medium hover:bg-[#123B2F] transition-colors"
-                >
-                  Kuesioner
-                </Link>
-              </form>
+              <Link
+                href="/survey"
+                className="bg-[#174C3C] text-white px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded text-xs sm:text-sm font-medium hover:bg-[#123B2F] transition-colors whitespace-nowrap shadow-xs"
+              >
+                Kuesioner
+              </Link>
             </div>
           ) : (
             <Link
               href="/login"
-              className="bg-[#174C3C] text-white px-3.5 py-1.5 rounded text-xs sm:text-sm font-medium hover:bg-[#123B2F] transition-colors"
+              className="bg-[#174C3C] text-white px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded text-xs sm:text-sm font-medium hover:bg-[#123B2F] transition-colors whitespace-nowrap shadow-xs"
             >
-              Masuk Akun IPB
+              Masuk
             </Link>
           )}
         </nav>

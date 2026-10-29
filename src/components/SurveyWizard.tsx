@@ -232,15 +232,15 @@ export function SurveyWizard({ userEmail }: { userEmail: string }) {
   const progressPercent = Math.round(((currentStep + 1) / totalSteps) * 100);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Progress Header */}
-      <div className="bg-[#FFFFFF] border border-[#E1E5DF] rounded p-6 shadow-sm">
+      <div className="bg-[#FFFFFF] border border-[#E1E5DF] rounded p-4 sm:p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
           <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#174C3C]">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#174C3C]">
               Langkah {currentStep + 1} dari {totalSteps}
             </span>
-            <h2 className="text-xl font-bold text-[#202522]">
+            <h2 className="text-lg sm:text-xl font-bold text-[#202522]">
               {currentStep < SURVEY_SECTIONS_DATA.length
                 ? `Bagian ${currentSection.sectionNumber}: ${currentSection.title}`
                 : "Tinjauan Akhir & Konfirmasi Pengiriman"}
@@ -260,7 +260,7 @@ export function SurveyWizard({ userEmail }: { userEmail: string }) {
         </div>
 
         {currentStep < SURVEY_SECTIONS_DATA.length && (
-          <p className="mt-3 text-xs text-[#636B65]">
+          <p className="mt-2.5 text-xs text-[#636B65]">
             {currentSection.subtitle}
           </p>
         )}
@@ -268,7 +268,7 @@ export function SurveyWizard({ userEmail }: { userEmail: string }) {
 
       {/* Main Question Card */}
       {currentStep < SURVEY_SECTIONS_DATA.length ? (
-        <div className="bg-[#FFFFFF] border border-[#E1E5DF] rounded p-6 sm:p-8 shadow-sm space-y-8">
+        <div className="bg-[#FFFFFF] border border-[#E1E5DF] rounded p-4 sm:p-8 shadow-sm space-y-6 sm:space-y-8">
           {currentSection.questions.map((q, idx) => (
             <div key={q.id} className="pt-6 first:pt-0 border-t first:border-t-0 border-[#E1E5DF]">
               <div className="mb-4">
@@ -392,15 +392,15 @@ export function SurveyWizard({ userEmail }: { userEmail: string }) {
               {/* LIKERT MATRIX RENDER */}
               {q.type === "likert_matrix" && q.statements && (
                 <div className="space-y-4">
-                  <div className="overflow-x-auto">
+                  {/* Desktop / Tablet Table View */}
+                  <div className="hidden sm:block overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="border-b border-[#E1E5DF] bg-[#F7F7F2]/80 text-[11px] text-[#737A74] uppercase tracking-wider">
                           <th className="py-3 px-3 font-semibold w-1/2">Pernyataan Sikap</th>
                           {LIKERT_OPTIONS.map((lo) => (
                             <th key={lo.value} className="py-3 px-2 text-center font-semibold">
-                              <span className="hidden sm:inline">{lo.label}</span>
-                              <span className="sm:hidden">{lo.value}</span>
+                              <span>{lo.label}</span>
                             </th>
                           ))}
                         </tr>
@@ -444,11 +444,57 @@ export function SurveyWizard({ userEmail }: { userEmail: string }) {
                       </tbody>
                     </table>
                   </div>
-                  <div className="text-[11px] text-[#737A74] flex flex-wrap gap-4 pt-1 sm:hidden">
-                    <span>1: Sangat Tidak Setuju</span>
-                    <span>2: Tidak Setuju</span>
-                    <span>3: Setuju</span>
-                    <span>4: Sangat Setuju</span>
+
+                  {/* Mobile Stacked Card View */}
+                  <div className="sm:hidden space-y-3">
+                    {q.statements.map((st) => {
+                      const currentVal = answers[st.id];
+                      const hasError = errors[st.id];
+                      return (
+                        <div
+                          key={st.id}
+                          className={`p-3.5 rounded border transition-colors ${
+                            hasError
+                              ? "border-[#B42318]/40 bg-[#FEE4E2]/20"
+                              : "border-[#E1E5DF] bg-[#FFFFFF]"
+                          }`}
+                        >
+                          <p className="text-xs font-semibold text-[#202522] leading-relaxed mb-3">
+                            {st.statement}
+                          </p>
+                          {hasError && (
+                            <span className="block text-[11px] text-[#B42318] mb-2 font-medium">
+                              {hasError}
+                            </span>
+                          )}
+                          <div className="grid grid-cols-2 gap-2">
+                            {LIKERT_OPTIONS.map((lo) => {
+                              const isSelected = currentVal === lo.value;
+                              return (
+                                <label
+                                  key={lo.value}
+                                  className={`flex items-center gap-2 p-2.5 rounded border text-xs cursor-pointer transition-all ${
+                                    isSelected
+                                      ? "border-[#174C3C] bg-[#EBF2EE] text-[#174C3C] font-semibold shadow-xs"
+                                      : "border-[#E1E5DF] bg-[#F7F7F2]/50 text-[#636B65]"
+                                  }`}
+                                >
+                                  <input
+                                    type="radio"
+                                    name={`${st.id}-mobile`}
+                                    value={lo.value}
+                                    checked={isSelected}
+                                    onChange={() => setAnswerValue(st.id, lo.value)}
+                                    className="w-3.5 h-3.5 text-[#174C3C] focus:ring-[#174C3C]"
+                                  />
+                                  <span className="leading-tight text-[11px]">{lo.label}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -518,14 +564,14 @@ export function SurveyWizard({ userEmail }: { userEmail: string }) {
       )}
 
       {/* Navigation Buttons */}
-      <div className="flex items-center justify-between pt-2">
+      <div className="flex items-center justify-between pt-2 gap-2">
         <button
           type="button"
           onClick={handlePrev}
           disabled={currentStep === 0 || isSubmitting}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded text-sm font-semibold text-[#202522] border border-[#E1E5DF] bg-[#FFFFFF] hover:bg-[#F7F7F2] transition-colors disabled:opacity-40 disabled:pointer-events-none"
+          className="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2.5 rounded text-xs sm:text-sm font-semibold text-[#202522] border border-[#E1E5DF] bg-[#FFFFFF] hover:bg-[#F7F7F2] transition-colors disabled:opacity-40 disabled:pointer-events-none"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           <span>Sebelumnya</span>
         </button>
 
@@ -533,31 +579,31 @@ export function SurveyWizard({ userEmail }: { userEmail: string }) {
           <button
             type="button"
             onClick={handleNext}
-            className={`inline-flex items-center gap-2 px-6 py-2.5 rounded text-sm font-semibold transition-all duration-200 cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2.5 rounded text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer ${
               isSectionFilled
                 ? "bg-[#174C3C] text-white hover:bg-[#123B2F] shadow-sm"
                 : "bg-[#E1E5DF] text-[#737A74] border border-[#D5DAD2] hover:bg-[#D8DDD5]"
             }`}
           >
             <span>Lanjutkan</span>
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
         ) : (
           <button
             type="button"
             onClick={handleFinalSubmit}
             disabled={isSubmitting || !consentGiven}
-            className="inline-flex items-center gap-2 bg-[#174C3C] text-white px-7 py-3 rounded text-sm font-bold hover:bg-[#123B2F] transition-all shadow-sm disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 sm:gap-2 bg-[#174C3C] text-white px-4 sm:px-7 py-3 rounded text-xs sm:text-sm font-bold hover:bg-[#123B2F] transition-all shadow-sm disabled:opacity-50"
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Menghitung Skor & Menyimpan...</span>
+                <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
+                <span>Menyimpan...</span>
               </>
             ) : (
               <>
                 <span>Kirim Jawaban Resmi</span>
-                <CheckCircle2 className="w-4 h-4" />
+                <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </>
             )}
           </button>
