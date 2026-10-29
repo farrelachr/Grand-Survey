@@ -19,10 +19,10 @@ export async function GET(request: Request) {
       if (user?.email) {
         const validation = validateStudentEmail(user.email);
         if (!validation.isValid) {
-          // Reject invalid domain immediately, sign out and redirect to login error
+          // Reject invalid domain immediately, sign out and redirect to unauthorized domain notice page
           await supabase.auth.signOut();
           return NextResponse.redirect(
-            new URL(`/login?error=${encodeURIComponent("Domain email tidak diizinkan. Gunakan email @apps.ipb.ac.id")}`, request.url)
+            new URL(`/unauthorized-domain?email=${encodeURIComponent(user.email)}`, request.url)
           );
         }
       }

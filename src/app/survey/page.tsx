@@ -28,7 +28,7 @@ export default async function SurveyPage() {
   // Verify email domain
   const validation = validateStudentEmail(user.email || "");
   if (!validation.isValid) {
-    redirect(`/login?error=${encodeURIComponent("Akses ditolak: Gunakan email resmi IPB University.")}`);
+    redirect(`/unauthorized-domain?email=${encodeURIComponent(user.email || "")}`);
   }
 
   // Check if respondent already submitted (non-admin can only submit once)
