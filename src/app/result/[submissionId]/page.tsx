@@ -4,16 +4,27 @@ import { Footer } from "@/components/Footer";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
-  Award,
   ShieldAlert,
   ArrowRight,
-  BookOpen,
-  CheckCircle2,
   HelpCircle,
   Sparkles,
   Info,
+  Terminal,
+  Timer,
+  ShieldCheck,
+  FileCode,
+  Code2,
+  Compass,
+  Lightbulb,
 } from "lucide-react";
-import { ItemScoreDetail, ScoringResult } from "@/lib/scoring";
+import {
+  ItemScoreDetail,
+  ScoringResult,
+  determineArchetype,
+  getPersonalizedSolutions,
+  PersonalizedSolution,
+} from "@/lib/scoring";
+import { PersonalityCard } from "@/components/PersonalityCard";
 import { RespondentAnswersViewer } from "@/components/RespondentAnswersViewer";
 
 export const metadata = {
@@ -69,45 +80,37 @@ export default async function ResultPage({
 
   const { score, category, scoringDetails, submittedAt, answers } = result.data;
   const details = scoringDetails as ScoringResult;
+  const respondentAnswers = answers || {};
+  const archetype = details.archetype || determineArchetype(score, respondentAnswers);
+  const personalizedSolutions: PersonalizedSolution[] =
+    details.personalizedSolutions || getPersonalizedSolutions(respondentAnswers, score);
 
-  // Visual meter color determination
-  const getBadgeStyle = () => {
-    switch (category) {
-      case "RENDAH":
-        return {
-          bg: "bg-[#EBF2EE]",
-          border: "border-[#174C3C]/30",
-          text: "text-[#174C3C]",
-          meterColor: "bg-[#174C3C]",
-        };
-      case "SEDANG":
-        return {
-          bg: "bg-[#FAF5EB]",
-          border: "border-[#D5A85B]/40",
-          text: "text-[#B88728]",
-          meterColor: "bg-[#D5A85B]",
-        };
-      case "TINGGI":
+  const renderSolutionIcon = (iconName: string) => {
+    switch (iconName) {
+      case "terminal":
+        return <Terminal className="w-4 h-4 text-[#174C3C]" />;
+      case "timer":
+        return <Timer className="w-4 h-4 text-[#B88728]" />;
+      case "shield":
+        return <ShieldCheck className="w-4 h-4 text-[#175CD3]" />;
+      case "file-text":
+        return <FileCode className="w-4 h-4 text-[#5925DC]" />;
+      case "code":
+        return <Code2 className="w-4 h-4 text-[#B42318]" />;
+      case "compass":
       default:
-        return {
-          bg: "bg-[#FEE4E2]",
-          border: "border-[#B42318]/30",
-          text: "text-[#B42318]",
-          meterColor: "bg-[#B42318]",
-        };
+        return <Compass className="w-4 h-4 text-[#115E59]" />;
     }
   };
-
-  const badgeStyle = getBadgeStyle();
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F7F7F2]">
       <Header />
 
-      <main className="flex-1 py-10 sm:py-16 px-4 sm:px-6">
-        <div className="max-w-3xl mx-auto space-y-8">
+      <main className="flex-1 py-10 sm:py-14 px-4 sm:px-6">
+        <div className="max-w-2xl mx-auto space-y-6">
           {already_submitted && (
-            <div className="p-4 rounded bg-[#EBF2EE] border border-[#174C3C]/20 flex items-start gap-3 text-xs text-[#174C3C]">
+            <div className="p-3.5 rounded-xl bg-[#EBF2EE] border border-[#174C3C]/20 flex items-start gap-2.5 text-xs text-[#174C3C]">
               <Info className="w-4 h-4 shrink-0 mt-0.5" />
               <span>
                 Anda sebelumnya telah menyelesaikan kuesioner ini. Berikut adalah hasil evaluasi resmi yang tersimpan di sistem.
@@ -115,166 +118,127 @@ export default async function ResultPage({
             </div>
           )}
 
-          {/* Editorial Score Banner */}
-          <div className="bg-[#FFFFFF] border border-[#E1E5DF] rounded p-6 sm:p-10 shadow-sm">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E1E5DF] pb-6">
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-widest text-[#737A74]">
-                  Hasil Evaluasi Mandiri Responden
-                </span>
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#202522] mt-1">
-                  Indeks Ketergantungan AI
-                </h1>
-                <p className="text-xs text-[#737A74] mt-1">
-                  ID Respon: <span className="font-mono text-[#202522]">{submissionId.slice(0, 8)}...</span> • Disubmit pada{" "}
-                  {new Date(submittedAt).toLocaleDateString("id-ID", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </p>
-              </div>
-
-              <div
-                className={`px-4 py-2 rounded-md border text-center self-start sm:self-auto ${badgeStyle.bg} ${badgeStyle.border}`}
-              >
-                <span className="text-[11px] font-semibold uppercase tracking-wider block opacity-80">
-                  Kategori
-                </span>
-                <span className={`text-sm font-bold ${badgeStyle.text}`}>
-                  {details.bandLabel}
-                </span>
-              </div>
-            </div>
-
-            {/* Score Visual Gauge */}
-            <div className="py-8">
-              <div className="flex items-baseline justify-between mb-2">
-                <span className="text-xs font-semibold text-[#737A74] uppercase tracking-wider">
-                  Skor Indeks Primer (0–100)
-                </span>
-                <div className="text-right">
-                  <span className="text-4xl sm:text-5xl font-black text-[#202522] tracking-tight">
-                    {score.toFixed(1)}
-                  </span>
-                  <span className="text-sm font-semibold text-[#737A74] ml-1">/ 100</span>
-                </div>
-              </div>
-
-              {/* Multi-segment Indicator */}
-              <div className="relative w-full h-4 bg-[#E1E5DF] rounded-full overflow-hidden mt-3">
-                <div
-                  className={`h-full transition-all duration-700 ease-out ${badgeStyle.meterColor}`}
-                  style={{ width: `${Math.min(100, Math.max(0, score))}%` }}
-                />
-              </div>
-
-              {/* Scale Labels */}
-              <div className="flex justify-between text-[11px] text-[#737A74] mt-2 font-medium">
-                <span>0 (Kemandirian Penuh)</span>
-                <span>33.3</span>
-                <span>66.7</span>
-                <span>100 (Ketergantungan Tinggi)</span>
-              </div>
-            </div>
-
-            {/* Non-judgmental Editorial Interpretation */}
-            <div className="p-5 rounded bg-[#F7F7F2] border border-[#E1E5DF]">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-[#202522] mb-1.5 flex items-center gap-1.5">
-                <BookOpen className="w-3.5 h-3.5 text-[#174C3C]" />
-                Interpretasi Akademik
-              </h2>
-              <p className="text-sm text-[#636B65] leading-relaxed">
-                {details.bandDescription}
+          {/* Top Context Header Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-[#FFFFFF] border border-[#E1E5DF] rounded-xl px-5 py-3 shadow-2xs">
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#737A74]">
+                Hasil Kuesioner Grand Survey HIMALKOM
+              </span>
+              <p className="text-xs text-[#737A74] mt-0.5">
+                ID Respon: <span className="font-mono text-[#202522]">{submissionId.slice(0, 8)}...</span> • Disubmit pada{" "}
+                {new Date(submittedAt).toLocaleDateString("id-ID", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
               </p>
+            </div>
+            <div
+              className={`px-3 py-1 rounded-full border text-xs font-bold self-start sm:self-auto ${
+                category === "RENDAH"
+                  ? "bg-[#EBF2EE] border-[#174C3C]/30 text-[#174C3C]"
+                  : category === "SEDANG"
+                  ? "bg-[#FAF5EB] border-[#D5A85B]/40 text-[#B88728]"
+                  : "bg-[#FEE4E2] border-[#B42318]/30 text-[#B42318]"
+              }`}
+            >
+              {details.bandLabel}
             </div>
           </div>
 
-          {/* Observations Based On Actual Answers */}
-          {details.observations && details.observations.length > 0 && (
-            <div className="bg-[#FFFFFF] border border-[#E1E5DF] rounded p-6 sm:p-8 shadow-sm">
-              <h2 className="text-base font-bold text-[#202522] mb-4 flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-[#D5A85B]" />
-                Observasi Khusus Pola Belajar Anda
-              </h2>
-              <ul className="space-y-3">
-                {details.observations.map((obs, idx) => (
-                  <li key={idx} className="flex items-start gap-3 text-sm text-[#202522] leading-relaxed">
-                    <span className="w-5 h-5 rounded bg-[#EBF2EE] text-[#174C3C] text-xs font-semibold flex items-center justify-center shrink-0 mt-0.5">
-                      {idx + 1}
-                    </span>
-                    <span>{obs}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {/* Modern Cyber-Academic Personality Collector Card */}
+          {archetype && (
+            <PersonalityCard
+              archetype={archetype}
+              score={score}
+              category={category}
+            />
           )}
 
-          {/* Practical Actionable Recommendations */}
-          {details.recommendations && details.recommendations.length > 0 && (
-            <div className="bg-[#FFFFFF] border border-[#E1E5DF] rounded p-6 sm:p-8 shadow-sm">
-              <h2 className="text-base font-bold text-[#202522] mb-4 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-[#174C3C]" />
-                Rekomendasi Penguatan Kompetensi
-              </h2>
-              <div className="space-y-3">
-                {details.recommendations.map((rec, idx) => (
+          {/* Personalized Short Actionable Solutions */}
+          {personalizedSolutions && personalizedSolutions.length > 0 && (
+            <div className="w-full max-w-md mx-auto bg-[#FFFFFF] border border-[#E1E5DF] rounded-2xl p-5 shadow-sm space-y-3.5">
+              <div className="flex items-center gap-2 pb-3 border-b border-[#E1E5DF]">
+                <div className="w-7 h-7 rounded-full bg-[#FAF5EB] text-[#B88728] flex items-center justify-center shrink-0">
+                  <Lightbulb className="w-4 h-4 text-[#D5A85B]" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-[#202522]">
+                    Rekomendasi Aksi Khusus Kamu
+                  </h3>
+                  <p className="text-[11px] text-[#737A74]">
+                    Langkah praktis yang disesuaikan dengan pola koding kamu:
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2.5">
+                {personalizedSolutions.map((sol, idx) => (
                   <div
-                    key={idx}
-                    className="p-3.5 rounded bg-[#F7F7F2] border border-[#E1E5DF] text-xs sm:text-sm text-[#636B65] leading-relaxed"
+                    key={sol.id || idx}
+                    className="p-3.5 rounded-xl bg-[#F7F7F2] border border-[#E1E5DF] space-y-1.5 transition-colors hover:bg-[#FAFDFB] hover:border-[#D1E3D8]"
                   >
-                    <p>{rec}</p>
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded bg-[#FFFFFF] border border-[#E1E5DF] flex items-center justify-center shrink-0">
+                        {renderSolutionIcon(sol.iconName)}
+                      </div>
+                      <span className="text-xs font-bold text-[#202522]">
+                        {sol.title}
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#525B54] leading-relaxed pl-8">
+                      {sol.advice}
+                    </p>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Transparent Scoring Methodology Breakdown */}
-          <div className="bg-[#FFFFFF] border border-[#E1E5DF] rounded p-6 sm:p-8 shadow-sm">
-            <h2 className="text-base font-bold text-[#202522] mb-2 flex items-center gap-2">
-              <HelpCircle className="w-4 h-4 text-[#737A74]" />
-              Transparansi Metodologi Penilaian (Scoring v{details.scoringVersion})
-            </h2>
-            <p className="text-xs text-[#636B65] leading-relaxed mb-4">
-              Indeks ketergantungan dihitung dari rata-rata aritmatika 8 butir pernyataan sikap pada Bagian 3. Setiap skala 1–4 dinormalisasi ke rentang 0–100. Butir bernada positif/mandiri (butir 6, 7, 8) dibalik nilainya (reverse scoring: <code className="text-[11px] font-mono bg-[#F7F7F2] px-1 py-0.5 rounded">reverseScore = 5 - Likert</code>) sehingga skor tinggi secara konsisten mencerminkan kecenderungan ketergantungan.
-            </p>
+          {/* Collapsible Methodology Accordion */}
+          <details className="group bg-[#FFFFFF] border border-[#E1E5DF] rounded p-5 shadow-sm transition-all">
+            <summary className="flex items-center justify-between cursor-pointer list-none select-none text-xs sm:text-sm font-bold text-[#202522]">
+              <div className="flex items-center gap-2">
+                <HelpCircle className="w-4 h-4 text-[#737A74]" />
+                <span>Ingin tahu bagaimana skor ketergantungan dihitung?</span>
+              </div>
+              <span className="text-xs text-[#174C3C] font-semibold group-open:hidden">
+                + Lihat Rincian
+              </span>
+              <span className="text-xs text-[#737A74] font-semibold hidden group-open:inline">
+                − Tutup
+              </span>
+            </summary>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-[#E1E5DF] bg-[#F7F7F2] text-[#737A74]">
-                    <th className="py-2.5 px-3 font-semibold">Indikator</th>
-                    <th className="py-2.5 px-2 text-center font-semibold">Jawaban (1-4)</th>
-                    <th className="py-2.5 px-2 text-center font-semibold">Tipe</th>
-                    <th className="py-2.5 px-2 text-right font-semibold">Skor Normalisasi</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#E1E5DF]">
-                  {details.itemDetails?.map((item: ItemScoreDetail) => (
-                    <tr key={item.id} className="hover:bg-[#F7F7F2]/50">
-                      <td className="py-2.5 px-3 text-[#202522]">{item.statement}</td>
-                      <td className="py-2.5 px-2 text-center font-medium text-[#202522]">{item.rawLikert}</td>
-                      <td className="py-2.5 px-2 text-center text-[#737A74]">
-                        {item.isReversed ? (
-                          <span className="text-[10px] bg-[#FAF5EB] text-[#D5A85B] px-1.5 py-0.5 rounded font-medium">
-                            Reverse
-                          </span>
-                        ) : (
-                          <span className="text-[10px] bg-[#EBF2EE] text-[#174C3C] px-1.5 py-0.5 rounded font-medium">
-                            Direct
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-2.5 px-2 text-right font-mono font-semibold text-[#202522]">
-                        {item.normalizedScore.toFixed(1)}
-                      </td>
+            <div className="mt-4 pt-4 border-t border-[#E1E5DF] space-y-3">
+              <p className="text-xs text-[#636B65] leading-relaxed">
+                Skor dihitung dari rata-rata 8 butir pernyataan sikap pada Bagian 3 (skala 1–4 dinormalisasi ke rentang 0–100). Khusus butir bernada positif/mandiri, nilainya dibalik agar skor tinggi konsisten menunjukkan ketergantungan yang lebih tinggi.
+              </p>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-[#E1E5DF] bg-[#F7F7F2] text-[#737A74]">
+                      <th className="py-2.5 px-3 font-semibold">Pernyataan</th>
+                      <th className="py-2.5 px-2 text-center font-semibold">Jawaban Kamu</th>
+                      <th className="py-2.5 px-2 text-right font-semibold">Skor (0-100)</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-[#E1E5DF]">
+                    {details.itemDetails?.map((item: ItemScoreDetail) => (
+                      <tr key={item.id} className="hover:bg-[#F7F7F2]/50">
+                        <td className="py-2.5 px-3 text-[#202522]">{item.statement}</td>
+                        <td className="py-2.5 px-2 text-center font-medium text-[#202522]">{item.rawLikert} / 4</td>
+                        <td className="py-2.5 px-2 text-right font-mono font-semibold text-[#202522]">
+                          {item.normalizedScore.toFixed(0)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          </details>
 
           {/* Complete Respondent Answers Breakdown */}
           <RespondentAnswersViewer answers={answers} />
