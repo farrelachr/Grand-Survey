@@ -47,13 +47,24 @@ export const SURVEY_SECTIONS_DATA: SectionContent[] = [
     subtitle: "Konfirmasi angkatan, peminatan bidang ilmu komputer, dan profil awal penggunaan AI.",
     questions: [
       {
+        id: "respondent_name",
+        title: "Nama Lengkap Responden",
+        description: "Tuliskan nama lengkap Anda (digunakan untuk verifikasi internal riset dan pengundian doorprize responden).",
+        type: "text",
+        placeholder: "Masukkan nama lengkap Anda...",
+        minChars: 2,
+      },
+      {
         id: "cohort_confirmation",
-        title: "Konfirmasi Angkatan Responden",
-        description: "Survei ini menargetkan mahasiswa Program Studi Ilmu Komputer IPB University Angkatan 62 (Tahun Masuk 2025).",
+        title: "Angkatan Responden",
+        description: "Pilih angkatan Anda sebagai mahasiswa Program Studi Ilmu Komputer IPB University.",
         type: "single_choice",
         options: [
+          { value: "Angkatan 60 (2023)", label: "Mahasiswa Ilmu Komputer IPB Angkatan 60 (2023)" },
+          { value: "Angkatan 61 (2024)", label: "Mahasiswa Ilmu Komputer IPB Angkatan 61 (2024)" },
           { value: "Angkatan 62 (2025)", label: "Mahasiswa Ilmu Komputer IPB Angkatan 62 (2025)" },
-          { value: "Lainnya", label: "Bukan Angkatan 62 / Program Studi Lain" },
+          { value: "Angkatan 63 (2026)", label: "Mahasiswa Ilmu Komputer IPB Angkatan 63 (2026)" },
+          { value: "Lainnya", label: "Lainnya / Program Studi Lain" },
         ],
       },
       {

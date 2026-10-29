@@ -86,10 +86,20 @@ export const SECTIONS: SectionMeta[] = [
 
 // Zod Schema for Complete Survey Submission
 export const SurveySubmissionSchema = z.object({
-  // Section 1: Profil (4 items)
-  cohort_confirmation: z.enum(["Angkatan 62 (2025)", "Lainnya"], {
-    message: "Pilih konfirmasi angkatan Anda.",
-  }),
+  // Section 1: Profil (5 items)
+  respondent_name: z.string().min(2, "Nama lengkap wajib diisi (minimal 2 karakter)."),
+  cohort_confirmation: z.enum(
+    [
+      "Angkatan 60 (2023)",
+      "Angkatan 61 (2024)",
+      "Angkatan 62 (2025)",
+      "Angkatan 63 (2026)",
+      "Lainnya",
+    ],
+    {
+      message: "Pilih angkatan Anda.",
+    }
+  ),
   cs_interest: z.string().min(1, "Pilih peminatan utama Ilmu Komputer Anda."),
   ai_usage_frequency: z.string().min(1, "Pilih frekuensi penggunaan AI Anda."),
   ai_tools_used: z.array(z.string()).min(1, "Pilih minimal satu alat AI yang pernah Anda gunakan."),

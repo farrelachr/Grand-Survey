@@ -7,6 +7,7 @@ import {
 import { SurveySubmissionPayload } from "../survey-schema";
 
 const mockBaseAnswers: SurveySubmissionPayload = {
+  respondent_name: "Farrel Alfachrezi",
   cohort_confirmation: "Angkatan 62 (2025)",
   cs_interest: "Software Engineering & Web/Mobile Dev",
   ai_usage_frequency: "Setiap hari (beberapa kali sehari)",

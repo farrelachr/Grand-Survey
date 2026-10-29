@@ -23,9 +23,7 @@ export function SurveyWizard({ userEmail }: { userEmail: string }) {
 
   // Current step: 0 to 8 are Sections 1 to 9. Step 9 is Review & Consent.
   const [currentStep, setCurrentStep] = useState<number>(0);
-  const [answers, setAnswers] = useState<Record<string, any>>({
-    cohort_confirmation: "Angkatan 62 (2025)",
-  });
+  const [answers, setAnswers] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -108,6 +106,12 @@ export function SurveyWizard({ userEmail }: { userEmail: string }) {
         if (!Array.isArray(val) || val.length === 0) {
           currentErrors[q.id] = "Pilih minimal satu opsi jawaban.";
         }
+      } else if (q.type === "text") {
+        const val = answers[q.id];
+        const minChars = q.minChars || 2;
+        if (!val || typeof val !== "string" || val.trim().length < minChars) {
+          currentErrors[q.id] = `Isian wajib diisi (minimal ${minChars} karakter).`;
+        }
       } else if (q.type === "textarea") {
         const val = answers[q.id];
         const minChars = q.minChars || 5;
@@ -140,6 +144,12 @@ export function SurveyWizard({ userEmail }: { userEmail: string }) {
       } else if (q.type === "multiple_choice") {
         const val = answers[q.id];
         if (!Array.isArray(val) || val.length === 0) {
+          return false;
+        }
+      } else if (q.type === "text") {
+        const val = answers[q.id];
+        const minChars = q.minChars || 2;
+        if (!val || typeof val !== "string" || val.trim().length < minChars) {
           return false;
         }
       } else if (q.type === "textarea") {
@@ -326,6 +336,25 @@ export function SurveyWizard({ userEmail }: { userEmail: string }) {
                       </label>
                     );
                   })}
+                </div>
+              )}
+
+              {/* TEXT INPUT RENDER */}
+              {q.type === "text" && (
+                <div>
+                  <input
+                    type="text"
+                    placeholder={q.placeholder || "Tuliskan nama lengkap Anda..."}
+                    value={answers[q.id] || ""}
+                    onChange={(e) => setAnswerValue(q.id, e.target.value)}
+                    className="w-full p-3.5 bg-[#FFFFFF] border border-[#E1E5DF] rounded text-sm text-[#202522] placeholder:text-[#737A74]/50 focus:border-[#174C3C] focus:ring-1 focus:ring-[#174C3C] transition-colors"
+                  />
+                  {q.minChars && (
+                    <div className="flex justify-between items-center mt-1 text-[11px] text-[#737A74]">
+                      <span>Minimal {q.minChars} karakter</span>
+                      <span>{(answers[q.id] || "").length} karakter</span>
+                    </div>
+                  )}
                 </div>
               )}
 
