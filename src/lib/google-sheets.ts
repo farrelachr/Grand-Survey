@@ -167,6 +167,25 @@ export function formatSubmissionRow(
 /**
  * Syncs a single survey submission into Google Sheets idempotently.
  */
+/**
+ * Safely parses and normalizes Google Service Account Private Key from environment variables.
+ * Handles escaped newlines (\n), real newlines, and surrounding quotes from UI inputs.
+ */
+export function getGooglePrivateKey(): string | undefined {
+  let key = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
+  if (!key) return undefined;
+
+  key = key.trim();
+  if (
+    (key.startsWith('"') && key.endsWith('"')) ||
+    (key.startsWith("'") && key.endsWith("'"))
+  ) {
+    key = key.slice(1, -1);
+  }
+
+  return key.replace(/\\n/g, "\n").trim();
+}
+
 export async function syncSubmissionToGoogleSheets(
   submissionId: string,
   submittedAt: string,
@@ -176,7 +195,7 @@ export async function syncSubmissionToGoogleSheets(
 ): Promise<SyncResult> {
   const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
   const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  const privateKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?.replace(/\\n/g, "\n");
+  const privateKey = getGooglePrivateKey();
 
   if (!spreadsheetId || !clientEmail || !privateKey) {
     return {

@@ -103,4 +103,27 @@ describe("Google Sheets & CSV Export Tests", () => {
     expect(csv).toContain("sub-1");
     expect(csv).toContain("Angkatan 62 (2025)");
   });
+
+  it("safely normalizes Google private key with escaped newlines and wrapping quotes", async () => {
+    const { getGooglePrivateKey } = await import("../google-sheets");
+
+    const originalKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
+    try {
+      // Test with escaped \n and surrounding double quotes
+      process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY = '"-----BEGIN PRIVATE KEY-----\\nMIIE...\\n-----END PRIVATE KEY-----\\n"';
+      const parsed1 = getGooglePrivateKey();
+      expect(parsed1?.startsWith('"')).toBe(false);
+      expect(parsed1?.endsWith('"')).toBe(false);
+      expect(parsed1).toContain("\n");
+
+      // Test with single quotes
+      process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY = "'-----BEGIN PRIVATE KEY-----\\nMIIE...\\n-----END PRIVATE KEY-----\\n'";
+      const parsed2 = getGooglePrivateKey();
+      expect(parsed2?.startsWith("'")).toBe(false);
+      expect(parsed2?.endsWith("'")).toBe(false);
+      expect(parsed2).toContain("\n");
+    } finally {
+      process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY = originalKey;
+    }
+  });
 });
