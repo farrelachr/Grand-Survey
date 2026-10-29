@@ -258,12 +258,6 @@ export function SurveyWizard({ userEmail }: { userEmail: string }) {
             style={{ width: `${progressPercent}%` }}
           />
         </div>
-
-        {currentStep < SURVEY_SECTIONS_DATA.length && (
-          <p className="mt-2.5 text-xs text-[#636B65]">
-            {currentSection.subtitle}
-          </p>
-        )}
       </div>
 
       {/* Main Question Card */}
