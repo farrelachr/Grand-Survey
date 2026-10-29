@@ -9,10 +9,12 @@ import {
   Download,
   Users,
   BarChart2,
+  BarChart3,
   TrendingUp,
   FileSpreadsheet,
   AlertTriangle,
   ShieldAlert,
+  ArrowRight,
 } from "lucide-react";
 import { SURVEY_VERSION, SCORING_VERSION } from "@/lib/survey-schema";
 
@@ -134,7 +136,14 @@ export default async function AdminDashboardPage() {
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                href="/admin/report"
+                className="inline-flex items-center gap-2 bg-[#FAF5EB] text-[#B88728] border border-[#D5A85B]/40 px-4 py-2.5 rounded text-sm font-semibold hover:bg-[#F3EAD3] transition-colors shadow-xs"
+              >
+                <BarChart3 className="w-4 h-4 text-[#D5A85B]" />
+                <span>Laporan 54 Pertanyaan</span>
+              </Link>
               <a
                 href="/api/admin/export"
                 download
@@ -204,6 +213,29 @@ export default async function AdminDashboardPage() {
                   : "Belum dikonfigurasi (Gunakan Ekspor CSV)"}
               </span>
             </div>
+          </div>
+
+          {/* Full Report Banner Card */}
+          <div className="bg-[#FFFFFF] border border-[#D5A85B]/50 rounded p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-5 relative overflow-hidden">
+            <div className="space-y-1 z-10">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-[#FAF5EB] text-[#B88728] text-[11px] font-bold uppercase tracking-wider">
+                <BarChart3 className="w-3.5 h-3.5" />
+                <span>Laporan Komprehensif per Pertanyaan</span>
+              </div>
+              <h2 className="text-lg font-bold text-[#202522] pt-1">
+                Visualisasi Grafik Lengkap untuk Seluruh 54 Pertanyaan
+              </h2>
+              <p className="text-xs text-[#636B65] max-w-2xl leading-relaxed">
+                Tinjau distribusi statistik dan grafik batang untuk setiap butir pertanyaan non-essay (skala Likert, pilihan tunggal, dan pilihan berganda) dilengkapi filter per bagian, pencarian kata kunci, serta pagination.
+              </p>
+            </div>
+            <Link
+              href="/admin/report"
+              className="inline-flex items-center justify-center gap-2 bg-[#174C3C] text-white px-5 py-2.5 rounded text-sm font-semibold hover:bg-[#123B2F] transition-colors shrink-0 shadow-sm"
+            >
+              <span>Buka Laporan Grafik</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
 
           {/* Interactive Visual Charts */}

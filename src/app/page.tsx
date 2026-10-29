@@ -18,9 +18,6 @@ export default async function HomePage() {
         {/* Editorial Hero Section */}
         <section className="border-b border-[#E1E5DF] bg-[#FFFFFF] py-16 sm:py-24">
           <div className="max-w-4xl mx-auto px-4 sm:px-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded border border-[#174C3C]/20 bg-[#EBF2EE] text-[#174C3C] text-xs font-semibold tracking-wider uppercase mb-6">
-              Grand Survey HIMALKOM 2026
-            </div>
 
             <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-[#202522] leading-[1.2] max-w-3xl">
               Seberapa mandiri kamu ketika belajar dengan AI?

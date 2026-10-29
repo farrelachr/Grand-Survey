@@ -16,9 +16,6 @@ export default function PrivacyPage() {
       <main className="flex-1 py-12 sm:py-16 px-4 sm:px-6">
         <div className="max-w-3xl mx-auto space-y-10">
           <div>
-            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded bg-[#EBF2EE] border border-[#174C3C]/20 text-[#174C3C] text-[11px] font-bold uppercase tracking-wider mb-3">
-              Kerahasiaan & Tata Kelola Data
-            </div>
             <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#202522]">
               Kebijakan Privasi & Etika Riset
             </h1>
@@ -30,9 +27,6 @@ export default function PrivacyPage() {
           <div className="space-y-6">
             <div className="bg-[#FFFFFF] border border-[#E1E5DF] rounded p-6 sm:p-8 shadow-sm">
               <div className="flex items-start gap-4">
-                <div className="p-2.5 rounded bg-[#EBF2EE] text-[#174C3C] shrink-0">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
                 <div>
                   <h2 className="text-base font-bold text-[#202522]">
                     1. Tujuan Pengumpulan Data
@@ -46,9 +40,6 @@ export default function PrivacyPage() {
 
             <div className="bg-[#FFFFFF] border border-[#E1E5DF] rounded p-6 sm:p-8 shadow-sm">
               <div className="flex items-start gap-4">
-                <div className="p-2.5 rounded bg-[#FAF5EB] text-[#D5A85B] shrink-0">
-                  <Lock className="w-5 h-5" />
-                </div>
                 <div>
                   <h2 className="text-base font-bold text-[#202522]">
                     2. Data yang Dikumpulkan dan Autentikasi
@@ -67,9 +58,6 @@ export default function PrivacyPage() {
 
             <div className="bg-[#FFFFFF] border border-[#E1E5DF] rounded p-6 sm:p-8 shadow-sm">
               <div className="flex items-start gap-4">
-                <div className="p-2.5 rounded bg-[#EBF2EE] text-[#174C3C] shrink-0">
-                  <EyeOff className="w-5 h-5" />
-                </div>
                 <div>
                   <h2 className="text-base font-bold text-[#202522]">
                     3. Pemisahan Identitas & Prinsip Pseudonimitas
@@ -83,9 +71,6 @@ export default function PrivacyPage() {
 
             <div className="bg-[#FFFFFF] border border-[#E1E5DF] rounded p-6 sm:p-8 shadow-sm">
               <div className="flex items-start gap-4">
-                <div className="p-2.5 rounded bg-[#FAF5EB] text-[#D5A85B] shrink-0">
-                  <Database className="w-5 h-5" />
-                </div>
                 <div>
                   <h2 className="text-base font-bold text-[#202522]">
                     4. Hak Akses & Keamanan Sistem
@@ -99,9 +84,6 @@ export default function PrivacyPage() {
 
             <div className="bg-[#FFFFFF] border border-[#E1E5DF] rounded p-6 sm:p-8 shadow-sm">
               <div className="flex items-start gap-4">
-                <div className="p-2.5 rounded bg-[#EBF2EE] text-[#174C3C] shrink-0">
-                  <Mail className="w-5 h-5" />
-                </div>
                 <div>
                   <h2 className="text-base font-bold text-[#202522]">
                     5. Kontak dan Narahubung Riset
