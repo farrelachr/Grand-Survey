@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SurveySubmissionSchema, SURVEY_VERSION, SurveySubmissionPayload } from "@/lib/survey-schema";
 import { calculateDependencyScore } from "@/lib/scoring";
-import { validateStudentEmail } from "@/lib/auth-validation";
+import { validateStudentEmail, isAdminEmail } from "@/lib/auth-validation";
 import { syncSubmissionToGoogleSheets } from "@/lib/google-sheets";
 
 export interface SubmitSurveyResult {
@@ -69,7 +69,11 @@ export async function submitSurvey(data: unknown): Promise<SubmitSurveyResult> {
       };
     }
 
-    // 5. Prevent duplicate submission: check if user already submitted for this version
+    // 5. Compute primary dependency score server-side
+    const scoringResult = calculateDependencyScore(validAnswers);
+
+    // 6. Prevent duplicate submission: non-admin can only submit once
+    const isAdmin = isAdminEmail(user.email);
     const { data: existingSub } = await admin
       .from("survey_submissions")
       .select("id")
@@ -78,15 +82,64 @@ export async function submitSurvey(data: unknown): Promise<SubmitSurveyResult> {
       .maybeSingle();
 
     if (existingSub) {
+      if (!isAdmin) {
+        return {
+          success: true,
+          submissionId: existingSub.id,
+          isDuplicate: true,
+        };
+      }
+
+      // Admin testing / resubmitting: update existing submission
+      const { data: updatedSubmission, error: updateError } = await admin
+        .from("survey_submissions")
+        .update({
+          answers: validAnswers,
+          dependency_score: scoringResult.score,
+          dependency_category: scoringResult.band,
+          scoring_details: scoringResult,
+          submitted_at: new Date().toISOString(),
+        })
+        .eq("id", existingSub.id)
+        .select("id, submitted_at")
+        .single();
+
+      if (updateError || !updatedSubmission) {
+        return {
+          success: false,
+          error: "Gagal memperbarui jawaban survei.",
+        };
+      }
+
+      // Non-blocking sync to Google Sheets for updated submission
+      (async () => {
+        try {
+          const syncRes = await syncSubmissionToGoogleSheets(
+            updatedSubmission.id,
+            updatedSubmission.submitted_at,
+            SURVEY_VERSION,
+            validAnswers,
+            scoringResult
+          );
+
+          await admin.from("spreadsheet_sync_logs").insert({
+            submission_id: updatedSubmission.id,
+            status: syncRes.status === "synced" || syncRes.status === "already_synced" ? "synced" : "failed",
+            attempt_count: 1,
+            last_error: syncRes.error || null,
+            last_attempt_at: new Date().toISOString(),
+            synced_at: syncRes.success ? new Date().toISOString() : null,
+          });
+        } catch (logErr: unknown) {
+          console.error("Non-blocking Google Sheets sync error:", logErr);
+        }
+      })();
+
       return {
         success: true,
-        submissionId: existingSub.id,
-        isDuplicate: true,
+        submissionId: updatedSubmission.id,
       };
     }
-
-    // 6. Compute primary dependency score server-side
-    const scoringResult = calculateDependencyScore(validAnswers);
 
     // 7. Insert submission with trusted user ID and computed scores
     const { data: newSubmission, error: insertError } = await admin

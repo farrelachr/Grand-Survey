@@ -126,6 +126,41 @@ export function SurveyWizard({ userEmail }: { userEmail: string }) {
     return Object.keys(currentErrors).length === 0;
   };
 
+  const isCurrentSectionFilled = (): boolean => {
+    if (!currentSection) return true;
+
+    for (const q of currentSection.questions) {
+      if (q.type === "likert_matrix" && q.statements) {
+        for (const st of q.statements) {
+          const val = answers[st.id];
+          if (val === undefined || val === null || val === "") {
+            return false;
+          }
+        }
+      } else if (q.type === "multiple_choice") {
+        const val = answers[q.id];
+        if (!Array.isArray(val) || val.length === 0) {
+          return false;
+        }
+      } else if (q.type === "textarea") {
+        const val = answers[q.id];
+        const minChars = q.minChars || 5;
+        if (!val || typeof val !== "string" || val.trim().length < minChars) {
+          return false;
+        }
+      } else {
+        const val = answers[q.id];
+        if (!val) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  };
+
+  const isSectionFilled = isCurrentSectionFilled();
+
   const handleNext = () => {
     if (validateCurrentSection()) {
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -455,7 +490,11 @@ export function SurveyWizard({ userEmail }: { userEmail: string }) {
           <button
             type="button"
             onClick={handleNext}
-            className="inline-flex items-center gap-2 bg-[#174C3C] text-white px-6 py-2.5 rounded text-sm font-semibold hover:bg-[#123B2F] transition-colors shadow-sm"
+            className={`inline-flex items-center gap-2 px-6 py-2.5 rounded text-sm font-semibold transition-all duration-200 cursor-pointer ${
+              isSectionFilled
+                ? "bg-[#174C3C] text-white hover:bg-[#123B2F] shadow-sm"
+                : "bg-[#E1E5DF] text-[#737A74] border border-[#D5DAD2] hover:bg-[#D8DDD5]"
+            }`}
           >
             <span>Lanjutkan</span>
             <ArrowRight className="w-4 h-4" />

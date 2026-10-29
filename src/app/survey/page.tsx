@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { validateStudentEmail } from "@/lib/auth-validation";
+import { validateStudentEmail, isAdminEmail } from "@/lib/auth-validation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SurveyWizard } from "@/components/SurveyWizard";
@@ -31,30 +31,38 @@ export default async function SurveyPage() {
     redirect(`/login?error=${encodeURIComponent("Akses ditolak: Gunakan email resmi IPB University.")}`);
   }
 
-  // Check if respondent already submitted
-  try {
-    const admin = createAdminClient();
-    const { data: versionRow } = await admin
-      .from("survey_versions")
-      .select("id")
-      .eq("version", SURVEY_VERSION)
-      .maybeSingle();
+  // Check if respondent already submitted (non-admin can only submit once)
+  const isAdmin = isAdminEmail(user.email);
+  let existingSubmissionId: string | null = null;
 
-    if (versionRow) {
-      const { data: existingSubmission } = await admin
-        .from("survey_submissions")
+  if (!isAdmin) {
+    try {
+      const admin = createAdminClient();
+      const { data: versionRow } = await admin
+        .from("survey_versions")
         .select("id")
-        .eq("user_id", user.id)
-        .eq("survey_version_id", versionRow.id)
+        .eq("version", SURVEY_VERSION)
         .maybeSingle();
 
-      if (existingSubmission) {
-        // Redirect directly to their result
-        redirect(`/result/${existingSubmission.id}?already_submitted=1`);
+      if (versionRow) {
+        const { data: existingSubmission } = await admin
+          .from("survey_submissions")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("survey_version_id", versionRow.id)
+          .maybeSingle();
+
+        if (existingSubmission) {
+          existingSubmissionId = existingSubmission.id;
+        }
       }
+    } catch (checkErr) {
+      console.warn("Could not check prior submission:", checkErr);
     }
-  } catch (checkErr) {
-    console.warn("Could not check prior submission:", checkErr);
+
+    if (existingSubmissionId) {
+      redirect(`/result/${existingSubmissionId}?already_submitted=1`);
+    }
   }
 
   return (
