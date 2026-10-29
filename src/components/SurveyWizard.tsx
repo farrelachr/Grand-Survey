@@ -65,6 +65,13 @@ export function SurveyWizard({ userEmail }: { userEmail: string }) {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [answers, isSubmitting]);
 
+  // Instantly scroll to top whenever the wizard step changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [currentStep]);
+
   const currentSection = SURVEY_SECTIONS_DATA[currentStep];
 
   // Value setter helper
@@ -173,14 +180,21 @@ export function SurveyWizard({ userEmail }: { userEmail: string }) {
 
   const handleNext = () => {
     if (validateCurrentSection()) {
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
       setCurrentStep((prev) => prev + 1);
+    } else {
+      // Scroll to top so respondent immediately sees the first missed question
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   const handlePrev = () => {
     setErrors({});
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
     setCurrentStep((prev) => Math.max(0, prev - 1));
   };
 
