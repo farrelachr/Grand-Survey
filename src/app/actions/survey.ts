@@ -229,6 +229,7 @@ export type SubmissionResultResponse =
         category: string;
         scoringDetails: any;
         version: any;
+        answers: Record<string, any>;
       };
     }
   | {
@@ -291,6 +292,7 @@ export async function getSubmissionResult(submissionId: string): Promise<Submiss
         category: submission.dependency_category,
         scoringDetails: submission.scoring_details,
         version: submission.survey_versions,
+        answers: submission.answers || {},
       },
     };
   } catch (err) {

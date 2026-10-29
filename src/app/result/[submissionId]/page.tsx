@@ -14,6 +14,7 @@ import {
   Info,
 } from "lucide-react";
 import { ItemScoreDetail, ScoringResult } from "@/lib/scoring";
+import { RespondentAnswersViewer } from "@/components/RespondentAnswersViewer";
 
 export const metadata = {
   title: "Hasil Evaluasi Ketergantungan AI — Grand Survey HIMALKOM 2026",
@@ -66,7 +67,7 @@ export default async function ResultPage({
     );
   }
 
-  const { score, category, scoringDetails, submittedAt } = result.data;
+  const { score, category, scoringDetails, submittedAt, answers } = result.data;
   const details = scoringDetails as ScoringResult;
 
   // Visual meter color determination
@@ -274,6 +275,9 @@ export default async function ResultPage({
               </table>
             </div>
           </div>
+
+          {/* Complete Respondent Answers Breakdown */}
+          <RespondentAnswersViewer answers={answers} />
 
           {/* Action Footer Buttons */}
           <div className="flex items-center justify-start pt-4">

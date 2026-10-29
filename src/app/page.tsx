@@ -10,6 +10,20 @@ export default async function HomePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  let userSubmissionId: string | null = null;
+  if (user) {
+    const { data: sub } = await supabase
+      .from("survey_submissions")
+      .select("id")
+      .eq("user_id", user.id)
+      .order("submitted_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (sub) {
+      userSubmissionId = sub.id;
+    }
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[#F7F7F2]">
       <Header />
@@ -28,13 +42,23 @@ export default async function HomePage() {
             </p>
 
             <div className="mt-6 sm:mt-8 flex flex-wrap items-center gap-4">
-              <Link
-                href={user ? "/survey" : "/login"}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#174C3C] text-white px-6 py-3.5 rounded text-sm sm:text-base font-semibold hover:bg-[#123B2F] transition-all shadow-sm group"
-              >
-                <span>Mulai Survei</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-              </Link>
+              {userSubmissionId ? (
+                <Link
+                  href={`/result/${userSubmissionId}`}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#174C3C] text-white px-6 py-3.5 rounded text-sm sm:text-base font-semibold hover:bg-[#123B2F] transition-all shadow-sm group"
+                >
+                  <span>Lihat Hasil & Jawaban Saya</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              ) : (
+                <Link
+                  href={user ? "/survey" : "/login"}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#174C3C] text-white px-6 py-3.5 rounded text-sm sm:text-base font-semibold hover:bg-[#123B2F] transition-all shadow-sm group"
+                >
+                  <span>Mulai Survei</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              )}
             </div>
 
             {/* Quick Context Bar */}

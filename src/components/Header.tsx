@@ -11,6 +11,20 @@ export async function Header() {
 
   const isAdmin = user?.email ? isAdminEmail(user.email) : false;
 
+  let userSubmissionId: string | null = null;
+  if (user) {
+    const { data: sub } = await supabase
+      .from("survey_submissions")
+      .select("id")
+      .eq("user_id", user.id)
+      .order("submitted_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (sub) {
+      userSubmissionId = sub.id;
+    }
+  }
+
   return (
     <header className="border-b border-[#E1E5DF] bg-[#FFFFFF] sticky top-0 z-40">
       <div className="max-w-5xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2">
@@ -57,12 +71,21 @@ export async function Header() {
               <span className="text-xs text-[#737A74] hidden md:inline truncate max-w-[160px]">
                 {user.email}
               </span>
-              <Link
-                href="/survey"
-                className="bg-[#174C3C] text-white px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded text-xs sm:text-sm font-medium hover:bg-[#123B2F] transition-colors whitespace-nowrap shadow-xs"
-              >
-                Kuesioner
-              </Link>
+              {userSubmissionId && !isAdmin ? (
+                <Link
+                  href={`/result/${userSubmissionId}`}
+                  className="bg-[#174C3C] text-white px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded text-xs sm:text-sm font-medium hover:bg-[#123B2F] transition-colors whitespace-nowrap shadow-xs"
+                >
+                  Hasil Saya
+                </Link>
+              ) : (
+                <Link
+                  href="/survey"
+                  className="bg-[#174C3C] text-white px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded text-xs sm:text-sm font-medium hover:bg-[#123B2F] transition-colors whitespace-nowrap shadow-xs"
+                >
+                  Kuesioner
+                </Link>
+              )}
             </div>
           ) : (
             <Link

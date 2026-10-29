@@ -3,12 +3,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { AdminSyncRetry } from "@/components/AdminSyncRetry";
-import { AdminCharts } from "@/components/AdminCharts";
 import Link from "next/link";
 import {
   Download,
   Users,
-  BarChart2,
   BarChart3,
   TrendingUp,
   FileSpreadsheet,
@@ -236,15 +234,6 @@ export default async function AdminDashboardPage() {
               <span>Buka Laporan Grafik</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
-          </div>
-
-          {/* Interactive Visual Charts */}
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <BarChart2 className="w-5 h-5 text-[#174C3C]" />
-              <h2 className="text-lg font-bold text-[#202522]">Visualisasi Grafik Agregat</h2>
-            </div>
-            <AdminCharts submissions={submissions} />
           </div>
 
           {/* Submissions Table with Pseudonymous IDs */}
