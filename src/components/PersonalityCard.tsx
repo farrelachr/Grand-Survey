@@ -112,7 +112,7 @@ export function PersonalityCard({ archetype, score, category }: PersonalityCardP
 
           {/* Top Series Header */}
           <div className="w-full flex items-center justify-between pb-3 border-b border-[#E1E5DF] text-[10px] sm:text-[11px] tracking-wider uppercase font-bold text-[#737A74]">
-            <span className="text-[#174C3C]">HIMALKOM • AI RESEARCH</span>
+            <span className="text-[#174C3C]">HIMALKOM </span>
             <span className="font-mono text-[#B88728]">{archetype.editionNo}</span>
           </div>
 
@@ -158,9 +158,6 @@ export function PersonalityCard({ archetype, score, category }: PersonalityCardP
 
           {/* 3 Metrics Progress Bars */}
           <div className="w-full pt-4 border-t border-[#E1E5DF] space-y-2.5 text-left">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#737A74] block text-center mb-1">
-              Metrik Profil Responden
-            </span>
 
             {/* Metric 1: Debugging */}
             <div>

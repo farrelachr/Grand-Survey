@@ -118,33 +118,6 @@ export default async function ResultPage({
             </div>
           )}
 
-          {/* Top Context Header Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-[#FFFFFF] border border-[#E1E5DF] rounded-xl px-5 py-3 shadow-2xs">
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[#737A74]">
-                Hasil Kuesioner Grand Survey HIMALKOM
-              </span>
-              <p className="text-xs text-[#737A74] mt-0.5">
-                ID Respon: <span className="font-mono text-[#202522]">{submissionId.slice(0, 8)}...</span> • Disubmit pada{" "}
-                {new Date(submittedAt).toLocaleDateString("id-ID", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
-              </p>
-            </div>
-            <div
-              className={`px-3 py-1 rounded-full border text-xs font-bold self-start sm:self-auto ${
-                category === "RENDAH"
-                  ? "bg-[#EBF2EE] border-[#174C3C]/30 text-[#174C3C]"
-                  : category === "SEDANG"
-                  ? "bg-[#FAF5EB] border-[#D5A85B]/40 text-[#B88728]"
-                  : "bg-[#FEE4E2] border-[#B42318]/30 text-[#B42318]"
-              }`}
-            >
-              {details.bandLabel}
-            </div>
-          </div>
 
           {/* Modern Cyber-Academic Personality Collector Card */}
           {archetype && (
@@ -159,16 +132,10 @@ export default async function ResultPage({
           {personalizedSolutions && personalizedSolutions.length > 0 && (
             <div className="w-full max-w-md mx-auto bg-[#FFFFFF] border border-[#E1E5DF] rounded-2xl p-5 shadow-sm space-y-3.5">
               <div className="flex items-center gap-2 pb-3 border-b border-[#E1E5DF]">
-                <div className="w-7 h-7 rounded-full bg-[#FAF5EB] text-[#B88728] flex items-center justify-center shrink-0">
-                  <Lightbulb className="w-4 h-4 text-[#D5A85B]" />
-                </div>
                 <div>
                   <h3 className="text-sm font-bold text-[#202522]">
-                    Rekomendasi Aksi Khusus Kamu
+                    Rekomendasi berdasarkan hasil
                   </h3>
-                  <p className="text-[11px] text-[#737A74]">
-                    Langkah praktis yang disesuaikan dengan pola koding kamu:
-                  </p>
                 </div>
               </div>
 
@@ -195,50 +162,7 @@ export default async function ResultPage({
             </div>
           )}
 
-          {/* Collapsible Methodology Accordion */}
-          <details className="group bg-[#FFFFFF] border border-[#E1E5DF] rounded p-5 shadow-sm transition-all">
-            <summary className="flex items-center justify-between cursor-pointer list-none select-none text-xs sm:text-sm font-bold text-[#202522]">
-              <div className="flex items-center gap-2">
-                <HelpCircle className="w-4 h-4 text-[#737A74]" />
-                <span>Ingin tahu bagaimana skor ketergantungan dihitung?</span>
-              </div>
-              <span className="text-xs text-[#174C3C] font-semibold group-open:hidden">
-                + Lihat Rincian
-              </span>
-              <span className="text-xs text-[#737A74] font-semibold hidden group-open:inline">
-                − Tutup
-              </span>
-            </summary>
 
-            <div className="mt-4 pt-4 border-t border-[#E1E5DF] space-y-3">
-              <p className="text-xs text-[#636B65] leading-relaxed">
-                Skor dihitung dari rata-rata 8 butir pernyataan sikap pada Bagian 3 (skala 1–4 dinormalisasi ke rentang 0–100). Khusus butir bernada positif/mandiri, nilainya dibalik agar skor tinggi konsisten menunjukkan ketergantungan yang lebih tinggi.
-              </p>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="border-b border-[#E1E5DF] bg-[#F7F7F2] text-[#737A74]">
-                      <th className="py-2.5 px-3 font-semibold">Pernyataan</th>
-                      <th className="py-2.5 px-2 text-center font-semibold">Jawaban Kamu</th>
-                      <th className="py-2.5 px-2 text-right font-semibold">Skor (0-100)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#E1E5DF]">
-                    {details.itemDetails?.map((item: ItemScoreDetail) => (
-                      <tr key={item.id} className="hover:bg-[#F7F7F2]/50">
-                        <td className="py-2.5 px-3 text-[#202522]">{item.statement}</td>
-                        <td className="py-2.5 px-2 text-center font-medium text-[#202522]">{item.rawLikert} / 4</td>
-                        <td className="py-2.5 px-2 text-right font-mono font-semibold text-[#202522]">
-                          {item.normalizedScore.toFixed(0)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </details>
 
           {/* Complete Respondent Answers Breakdown */}
           <RespondentAnswersViewer answers={answers} />
