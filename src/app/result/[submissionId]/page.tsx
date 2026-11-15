@@ -3,33 +3,17 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  ShieldAlert,
-  ArrowRight,
-  HelpCircle,
-  Sparkles,
-  Info,
-  Terminal,
-  Timer,
-  ShieldCheck,
-  FileCode,
-  Code2,
-  Compass,
-  Lightbulb,
-} from "lucide-react";
-import {
-  ItemScoreDetail,
-  ScoringResult,
-  determineArchetype,
-  getPersonalizedSolutions,
-  PersonalizedSolution,
-} from "@/lib/scoring";
-import { PersonalityCard } from "@/components/PersonalityCard";
+import { ShieldAlert, Info, ArrowLeft, Zap } from "lucide-react";
+import { ScoringResult, calculateDependencyScore } from "@/lib/scoring";
+import { AcademicEvaluationReport } from "@/components/AcademicEvaluationReport";
 import { RespondentAnswersViewer } from "@/components/RespondentAnswersViewer";
+import { getMockSurveyAnswers, MockPreset, MOCK_PRESETS } from "@/lib/mock-survey-answers";
+import { createClient } from "@/lib/supabase/server";
+import { isAdminEmail } from "@/lib/auth-validation";
 
 export const metadata = {
-  title: "Hasil Evaluasi Ketergantungan AI — Grand Survey HIMALKOM 2026",
-  description: "Hasil indeks evaluasi ketergantungan akademik mahasiswa Ilmu Komputer IPB terhadap AI.",
+  title: "Laporan Evaluasi Ketergantungan AI — Grand Survey HIMALKOM 2026",
+  description: "Rangkuman hasil asesmen evaluasi ketergantungan akademik mahasiswa Ilmu Komputer IPB terhadap AI.",
 };
 
 export const dynamic = "force-dynamic";
@@ -39,142 +23,169 @@ export default async function ResultPage({
   searchParams,
 }: {
   params: Promise<{ submissionId: string }>;
-  searchParams: Promise<{ already_submitted?: string }>;
+  searchParams: Promise<{ already_submitted?: string; preset?: string }>;
 }) {
   const { submissionId } = await params;
-  const { already_submitted } = await searchParams;
+  const { already_submitted, preset } = await searchParams;
 
-  const result = await getSubmissionResult(submissionId);
+  const isDemo = submissionId === "demo" || submissionId === "test" || submissionId === "preview";
 
-  if (!result.success || !result.data) {
-    if (result.error === "UNAUTHORIZED") {
-      redirect(`/login?error=${encodeURIComponent("Silakan masuk untuk melihat hasil Anda.")}`);
-    }
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const isAdmin = user?.email ? isAdminEmail(user.email) : false;
 
-    return (
-      <div className="min-h-screen flex flex-col bg-[#F7F7F2]">
-        <Header />
-        <main className="flex-1 flex items-center justify-center p-6">
-          <div className="max-w-md w-full bg-[#FFFFFF] border border-[#E1E5DF] rounded p-8 text-center shadow-sm">
-            <div className="w-12 h-12 rounded bg-[#FEE4E2] text-[#B42318] flex items-center justify-center mx-auto mb-4">
-              <ShieldAlert className="w-6 h-6" />
-            </div>
-            <h1 className="text-xl font-bold text-[#202522]">Akses Ditolak / Tidak Ditemukan</h1>
-            <p className="mt-2 text-sm text-[#636B65]">
-              {result.message || "Data hasil evaluasi tidak dapat dimuat atau Anda tidak memiliki hak akses untuk URL ini."}
-            </p>
-            <div className="mt-6">
-              <Link
-                href="/"
-                className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white bg-[#174C3C] rounded hover:bg-[#123B2F]"
-              >
-                Kembali ke Beranda
-              </Link>
-            </div>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
+  // Non-admin is strictly forbidden from accessing demo simulations
+  if (isDemo && !isAdmin) {
+    redirect("/survey");
   }
 
-  const { score, category, scoringDetails, submittedAt, answers } = result.data;
-  const details = scoringDetails as ScoringResult;
-  const respondentAnswers = answers || {};
-  const archetype = details.archetype || determineArchetype(score, respondentAnswers);
-  const personalizedSolutions: PersonalizedSolution[] =
-    details.personalizedSolutions || getPersonalizedSolutions(respondentAnswers, score);
+  let score = 0;
+  let category = "SEDANG";
+  let details: ScoringResult;
+  let submittedAt = new Date().toISOString();
+  let respondentAnswers: Record<string, any> = {};
 
-  const renderSolutionIcon = (iconName: string) => {
-    switch (iconName) {
-      case "terminal":
-        return <Terminal className="w-4 h-4 text-[#174C3C]" />;
-      case "timer":
-        return <Timer className="w-4 h-4 text-[#B88728]" />;
-      case "shield":
-        return <ShieldCheck className="w-4 h-4 text-[#175CD3]" />;
-      case "file-text":
-        return <FileCode className="w-4 h-4 text-[#5925DC]" />;
-      case "code":
-        return <Code2 className="w-4 h-4 text-[#B42318]" />;
-      case "compass":
-      default:
-        return <Compass className="w-4 h-4 text-[#115E59]" />;
+  if (isDemo) {
+    const activePreset: MockPreset =
+      preset === "rendah" || preset === "tinggi" ? preset : "sedang";
+    const mock = getMockSurveyAnswers(activePreset);
+    respondentAnswers = mock;
+    details = calculateDependencyScore(mock);
+    score = details.score;
+    category = details.band;
+  } else {
+    const result = await getSubmissionResult(submissionId);
+
+    if (!result.success || !result.data) {
+      if (result.error === "UNAUTHORIZED") {
+        redirect(`/login?error=${encodeURIComponent("Silakan masuk untuk melihat hasil Anda.")}`);
+      }
+
+      return (
+        <div className="min-h-screen flex flex-col bg-[#F7F7F2]">
+          <Header />
+          <main className="flex-1 flex items-center justify-center p-6">
+            <div className="max-w-md w-full bg-[#FFFFFF] border border-[#E1E5DF] rounded-xl p-8 text-center shadow-sm">
+              <div className="w-12 h-12 rounded bg-[#FEE4E2] text-[#B42318] flex items-center justify-center mx-auto mb-4">
+                <ShieldAlert className="w-6 h-6" />
+              </div>
+              <h1 className="text-xl font-bold text-[#202522]">Akses Ditolak / Tidak Ditemukan</h1>
+              <p className="mt-2 text-sm text-[#636B65]">
+                {result.message || "Data hasil evaluasi tidak dapat dimuat atau Anda tidak memiliki hak akses untuk URL ini."}
+              </p>
+              <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Link
+                  href="/"
+                  className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white bg-[#174C3C] rounded-lg hover:bg-[#123B2F]"
+                >
+                  Kembali ke Beranda
+                </Link>
+                {isAdmin && (
+                  <Link
+                    href="/result/demo"
+                    className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-[#174C3C] bg-[#EBF2EE] rounded-lg hover:bg-[#DCEAE1]"
+                  >
+                    Buka Simulasi Demo
+                  </Link>
+                )}
+              </div>
+            </div>
+          </main>
+          <Footer />
+        </div>
+      );
     }
-  };
+
+    score = result.data.score;
+    category = result.data.category;
+    details = result.data.scoringDetails as ScoringResult;
+    submittedAt = result.data.submittedAt;
+    respondentAnswers = result.data.answers || {};
+  }
+
+  const currentPreset = preset === "rendah" || preset === "tinggi" ? preset : "sedang";
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F7F7F2]">
       <Header />
 
-      <main className="flex-1 py-10 sm:py-14 px-4 sm:px-6">
-        <div className="max-w-2xl mx-auto space-y-6">
-          {already_submitted && (
-            <div className="p-3.5 rounded-xl bg-[#EBF2EE] border border-[#174C3C]/20 flex items-start gap-2.5 text-xs text-[#174C3C]">
-              <Info className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>
-                Anda sebelumnya telah menyelesaikan kuesioner ini. Berikut adalah hasil evaluasi resmi yang tersimpan di sistem.
-              </span>
-            </div>
-          )}
-
-
-          {/* Modern Cyber-Academic Personality Collector Card */}
-          {archetype && (
-            <PersonalityCard
-              archetype={archetype}
-              score={score}
-              category={category}
-            />
-          )}
-
-          {/* Personalized Short Actionable Solutions */}
-          {personalizedSolutions && personalizedSolutions.length > 0 && (
-            <div className="w-full max-w-md mx-auto bg-[#FFFFFF] border border-[#E1E5DF] rounded-2xl p-5 shadow-sm space-y-3.5">
-              <div className="flex items-center gap-2 pb-3 border-b border-[#E1E5DF]">
-                <div>
-                  <h3 className="text-sm font-bold text-[#202522]">
-                    Rekomendasi berdasarkan hasil
-                  </h3>
-                </div>
+      <main className="flex-1 py-8 sm:py-12 px-4 sm:px-6">
+        <div className="max-w-xl mx-auto space-y-4">
+          {/* Demo / Testing Toolbar (Admin only) */}
+          {isDemo && isAdmin && (
+            <div className="p-3.5 rounded-xl bg-[#FAFDFB] border border-[#174C3C]/30 text-xs text-[#202522] space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-[#174C3C] flex items-center gap-1.5">
+                  <Zap className="w-3.5 h-3.5" />
+                  Mode Pengujian Hasil Langsung (Tanpa Isi Form)
+                </span>
+                <span className="text-[10px] bg-[#EBF2EE] text-[#174C3C] px-2 py-0.5 rounded font-mono font-bold">
+                  SIMULASI
+                </span>
               </div>
-
-              <div className="space-y-2.5">
-                {personalizedSolutions.map((sol, idx) => (
-                  <div
-                    key={sol.id || idx}
-                    className="p-3.5 rounded-xl bg-[#F7F7F2] border border-[#E1E5DF] space-y-1.5 transition-colors hover:bg-[#FAFDFB] hover:border-[#D1E3D8]"
+              <div className="flex items-center gap-1.5 pt-0.5">
+                <span className="text-[#737A74] text-[11px]">Ubah Profil:</span>
+                {(["rendah", "sedang", "tinggi"] as MockPreset[]).map((p) => (
+                  <Link
+                    key={p}
+                    href={`/result/demo?preset=${p}`}
+                    className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-colors ${
+                      currentPreset === p
+                        ? "bg-[#174C3C] text-white"
+                        : "bg-[#FFFFFF] border border-[#E1E5DF] text-[#636B65] hover:bg-[#F7F7F2]"
+                    }`}
                   >
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded bg-[#FFFFFF] border border-[#E1E5DF] flex items-center justify-center shrink-0">
-                        {renderSolutionIcon(sol.iconName)}
-                      </div>
-                      <span className="text-xs font-bold text-[#202522]">
-                        {sol.title}
-                      </span>
-                    </div>
-                    <p className="text-xs text-[#525B54] leading-relaxed pl-8">
-                      {sol.advice}
-                    </p>
-                  </div>
+                    {MOCK_PRESETS[p].label}
+                  </Link>
                 ))}
               </div>
             </div>
           )}
 
+          {already_submitted && (
+            <div className="p-3.5 rounded-xl bg-[#EBF2EE] border border-[#174C3C]/20 flex items-start gap-2.5 text-xs text-[#174C3C]">
+              <Info className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>
+                Anda sebelumnya telah menyelesaikan kuesioner ini. Berikut adalah rangkuman resmi yang tersimpan di sistem.
+              </span>
+            </div>
+          )}
 
+          {/* Satu Kotak Rangkuman Tunggal */}
+          <AcademicEvaluationReport
+            submissionId={submissionId}
+            submittedAt={submittedAt}
+            score={score}
+            category={category}
+            scoringDetails={details}
+            answers={respondentAnswers}
+          />
 
-          {/* Complete Respondent Answers Breakdown */}
-          <RespondentAnswersViewer answers={answers} />
+          {/* Details toggle / Viewer */}
+          <div className="pt-1">
+            <RespondentAnswersViewer answers={respondentAnswers} />
+          </div>
 
           {/* Action Footer Buttons */}
-          <div className="flex items-center justify-start pt-4">
+          <div className="flex items-center justify-between pt-2 text-xs">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#174C3C] bg-[#FFFFFF] border border-[#E1E5DF] px-4 py-2.5 rounded hover:bg-[#F7F7F2] transition-colors"
+              className="inline-flex items-center gap-1.5 font-semibold text-[#174C3C] bg-[#FFFFFF] border border-[#E1E5DF] px-3.5 py-2 rounded-lg hover:bg-[#F7F7F2] transition-colors shadow-2xs"
             >
-              &larr; Kembali ke Halaman Utama
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Kembali ke Beranda</span>
             </Link>
+
+            {isAdmin && !isDemo && (
+              <Link
+                href="/result/demo"
+                className="text-[#737A74] hover:text-[#174C3C] transition-colors"
+              >
+                Uji Simulasi Profil Lain →
+              </Link>
+            )}
           </div>
         </div>
       </main>

@@ -141,7 +141,26 @@ export async function submitSurvey(data: unknown): Promise<SubmitSurveyResult> {
       };
     }
 
-    // 7. Insert submission with trusted user ID and computed scores
+    // 7. Non-admin safeguard: ensure NIM has not been submitted previously
+    if (!isAdmin && validAnswers.nim) {
+      const normalizedNim = validAnswers.nim.trim().toUpperCase();
+      const { data: existingNimSub } = await admin
+        .from("survey_submissions")
+        .select("id")
+        .filter("answers->>nim", "eq", normalizedNim)
+        .limit(1)
+        .maybeSingle();
+
+      if (existingNimSub) {
+        return {
+          success: true,
+          submissionId: existingNimSub.id,
+          isDuplicate: true,
+        };
+      }
+    }
+
+    // 8. Insert submission with trusted user ID and computed scores
     const { data: newSubmission, error: insertError } = await admin
       .from("survey_submissions")
       .insert({

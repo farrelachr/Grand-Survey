@@ -88,11 +88,20 @@ export const SECTIONS: SectionMeta[] = [
 export const SurveySubmissionSchema = z.object({
   // Section 1: Profil (5 items)
   respondent_name: z.string().min(2, "Nama lengkap wajib diisi (minimal 2 karakter)."),
-  nim: z.string().min(8, "NIM wajib diisi (minimal 8 karakter)."),
+  nim: z
+    .string()
+    .trim()
+    .regex(/^M0403\d{5,7}$/i, "Format NIM tidak valid. Gunakan format M0403xxxxxx."),
   cohort_confirmation: z.enum(["60", "61", "62", "63"], {
     message: "Pilih angkatan Anda (60, 61, 62, atau 63).",
   }),
-  whatsapp_number: z.string().min(9, "Nomor WhatsApp aktif wajib diisi (minimal 9 digit)."),
+  whatsapp_number: z
+    .string()
+    .trim()
+    .regex(
+      /^(https?:\/\/)?wa\.me\/62\d{8,14}$/i,
+      "Format WhatsApp tidak valid. Gunakan format wa.me/62xxx (contoh: wa.me/6281234567890)."
+    ),
   ipb_email: z.string().min(5, "Email IPB wajib diisi."),
 
   // Section 2: Pola Penggunaan (5 items)

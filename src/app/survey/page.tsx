@@ -70,7 +70,7 @@ export default async function SurveyPage() {
       <Header />
       <main className="flex-1 py-8 sm:py-12 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto">
-          <SurveyWizard userEmail={user.email || ""} />
+          <SurveyWizard userEmail={user.email || ""} isAdmin={isAdmin} />
         </div>
       </main>
       <Footer />

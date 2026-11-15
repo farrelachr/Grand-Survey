@@ -14,11 +14,19 @@ import {
   RotateCcw,
   ShieldCheck,
   FileText,
+  Zap,
 } from "lucide-react";
+import { getMockSurveyAnswers, MockPreset } from "@/lib/mock-survey-answers";
 
 const STORAGE_KEY = "himalkom_survey_draft_2026";
 
-export function SurveyWizard({ userEmail }: { userEmail: string }) {
+export function SurveyWizard({
+  userEmail,
+  isAdmin = false,
+}: {
+  userEmail: string;
+  isAdmin?: boolean;
+}) {
   const router = useRouter();
 
   // Current step: 0 to 8 are Sections 1 to 9. Step 9 is Review & Consent.
@@ -124,6 +132,10 @@ export function SurveyWizard({ userEmail }: { userEmail: string }) {
         const minChars = q.minChars || 2;
         if (!val || typeof val !== "string" || val.trim().length < minChars) {
           currentErrors[q.id] = `Isian wajib diisi (minimal ${minChars} karakter).`;
+        } else if (q.id === "nim" && !/^M0403\d{5,7}$/i.test(val.trim())) {
+          currentErrors[q.id] = "Format NIM tidak valid. Gunakan format M0403xxxxxx.";
+        } else if (q.id === "whatsapp_number" && !/^(https?:\/\/)?wa\.me\/62\d{8,14}$/i.test(val.trim())) {
+          currentErrors[q.id] = "Format WhatsApp tidak valid. Gunakan format wa.me/62xxx (contoh: wa.me/6281234567890).";
         }
       } else if (q.type === "textarea") {
         const val = answers[q.id];
@@ -163,6 +175,12 @@ export function SurveyWizard({ userEmail }: { userEmail: string }) {
         const val = answers[q.id];
         const minChars = q.minChars || 2;
         if (!val || typeof val !== "string" || val.trim().length < minChars) {
+          return false;
+        }
+        if (q.id === "nim" && !/^M0403\d{5,7}$/i.test(val.trim())) {
+          return false;
+        }
+        if (q.id === "whatsapp_number" && !/^(https?:\/\/)?wa\.me\/62\d{8,14}$/i.test(val.trim())) {
           return false;
         }
       } else if (q.type === "textarea") {
@@ -234,11 +252,67 @@ export function SurveyWizard({ userEmail }: { userEmail: string }) {
     }
   };
 
+  const handleAutoFill = (preset: MockPreset) => {
+    if (!isAdmin) return;
+    const mock = getMockSurveyAnswers(preset, userEmail);
+    setAnswers(mock);
+    setErrors({});
+    setConsentGiven(true);
+    setCurrentStep(SURVEY_SECTIONS_DATA.length); // Jump to review & submit step directly
+  };
+
   const totalSteps = SURVEY_SECTIONS_DATA.length + 1; // 9 sections + 1 review
   const progressPercent = Math.round(((currentStep + 1) / totalSteps) * 100);
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* Quick Test / Auto-Fill Toolbar (Admin only) */}
+      {isAdmin && (
+        <div className="bg-[#FAFDFB] border border-[#174C3C]/20 rounded-xl p-3 sm:p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-[#174C3C] flex items-center gap-1">
+              <Zap className="w-3.5 h-3.5 text-[#174C3C]" />
+              Uji Coba Cepat Administrator (Tanpa Isi Form):
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => handleAutoFill("rendah")}
+              className="px-2.5 py-1 rounded-md bg-[#EBF2EE] text-[#174C3C] font-semibold hover:bg-[#DCEAE1] transition-colors border border-[#174C3C]/20"
+              title="Isi otomatis profil mandiri dan langsung ke halaman kirim"
+            >
+              Isi Mandiri (~13)
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAutoFill("sedang")}
+              className="px-2.5 py-1 rounded-md bg-[#FAF5EB] text-[#B88728] font-semibold hover:bg-[#F3EAD3] transition-colors border border-[#D5A85B]/30"
+              title="Isi otomatis profil moderat dan langsung ke halaman kirim"
+            >
+              Isi Moderat (~53)
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAutoFill("tinggi")}
+              className="px-2.5 py-1 rounded-md bg-[#FEE4E2] text-[#B42318] font-semibold hover:bg-[#FCD0CC] transition-colors border border-[#B42318]/30"
+              title="Isi otomatis profil tinggi dan langsung ke halaman kirim"
+            >
+              Isi Tinggi (~87)
+            </button>
+            <a
+              href="/result/demo"
+              target="_blank"
+              className="px-2.5 py-1 rounded-md bg-[#FFFFFF] text-[#202522] font-semibold hover:bg-[#F7F7F2] transition-colors border border-[#E1E5DF]"
+              title="Lihat simulasi hasil langsung tanpa perlu mengirim form"
+            >
+              Simulasi Hasil Instan ↗
+            </a>
+          </div>
+        </div>
+      )}
+
       {/* Progress Header */}
       <div className="bg-[#FFFFFF] border border-[#E1E5DF] rounded p-4 sm:p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
@@ -378,15 +452,43 @@ export function SurveyWizard({ userEmail }: { userEmail: string }) {
                     type="text"
                     placeholder={q.placeholder || "Tuliskan nama lengkap Anda..."}
                     value={answers[q.id] || ""}
-                    onChange={(e) => setAnswerValue(q.id, e.target.value)}
-                    className="w-full p-3.5 bg-[#FFFFFF] border border-[#E1E5DF] rounded text-sm text-[#202522] placeholder:text-[#737A74]/50 focus:border-[#174C3C] focus:ring-1 focus:ring-[#174C3C] transition-colors"
+                    onChange={(e) => {
+                      let val = e.target.value;
+                      if (q.id === "nim") {
+                        val = val.toUpperCase();
+                      }
+                      setAnswerValue(q.id, val);
+                    }}
+                    onBlur={(e) => {
+                      if (q.id === "whatsapp_number") {
+                        const trimmed = e.target.value.trim();
+                        if (/^08\d{7,12}$/.test(trimmed)) {
+                          setAnswerValue(q.id, `wa.me/62${trimmed.slice(1)}`);
+                        } else if (/^628\d{7,12}$/.test(trimmed)) {
+                          setAnswerValue(q.id, `wa.me/${trimmed}`);
+                        } else if (/^\+628\d{7,12}$/.test(trimmed)) {
+                          setAnswerValue(q.id, `wa.me/${trimmed.slice(1)}`);
+                        }
+                      }
+                    }}
+                    className={`w-full p-3.5 bg-[#FFFFFF] border rounded text-sm text-[#202522] placeholder:text-[#737A74]/50 transition-colors ${
+                      errors[q.id]
+                        ? "border-[#B42318] focus:border-[#B42318] focus:ring-1 focus:ring-[#B42318]"
+                        : "border-[#E1E5DF] focus:border-[#174C3C] focus:ring-1 focus:ring-[#174C3C]"
+                    }`}
                   />
-                  {q.minChars && (
-                    <div className="flex justify-between items-center mt-1 text-[11px] text-[#737A74]">
-                      <span>Minimal {q.minChars} karakter</span>
-                      <span>{(answers[q.id] || "").length} karakter</span>
-                    </div>
-                  )}
+                  <div className="flex justify-between items-center mt-1 text-[11px] text-[#737A74]">
+                    <span>
+                      {q.id === "nim"
+                        ? "Format wajib: M0403xxxxxx"
+                        : q.id === "whatsapp_number"
+                        ? "Format wajib: wa.me/62xxx"
+                        : q.minChars
+                        ? `Minimal ${q.minChars} karakter`
+                        : ""}
+                    </span>
+                    <span>{(answers[q.id] || "").length} karakter</span>
+                  </div>
                 </div>
               )}
 

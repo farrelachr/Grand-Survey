@@ -9,9 +9,9 @@ import { SurveySubmissionPayload } from "../survey-schema";
 
 const mockBaseAnswers: SurveySubmissionPayload = {
   respondent_name: "Farrel Alfachrezi",
-  nim: "G6401221001",
+  nim: "M0403241015",
   cohort_confirmation: "62",
-  whatsapp_number: "081234567890",
+  whatsapp_number: "wa.me/6281234567890",
   ipb_email: "farrelalfachrezi@apps.ipb.ac.id",
   primary_ai_tool: "ChatGPT",
   weekly_ai_duration: "Kadang-kadang (1–3 jam/hari)",
@@ -168,5 +168,98 @@ describe("Scoring Engine - Unit Tests", () => {
     expect(() => calculateDependencyScore(incompleteAnswers as SurveySubmissionPayload)).toThrow(
       "Data kuesioner tidak lengkap: nilai 'dep_3' tidak valid atau belum diisi."
     );
+  });
+
+  it("produces comprehensive academic evaluation metrics, strengths, and risks", () => {
+    const result = calculateDependencyScore(mockBaseAnswers);
+
+    expect(result.usageProfile.primaryTool).toBe("ChatGPT");
+    expect(result.metrics.journalAccuracy.correct).toBe(6);
+    expect(result.metrics.journalAccuracy.percentage).toBe(100);
+    expect(result.metrics.debuggingAutonomy).toBeGreaterThan(0);
+    expect(result.metrics.criticalVerification).toBeGreaterThan(0);
+    expect(result.strengths.length).toBeGreaterThan(0);
+    expect(result.risks.length).toBeGreaterThan(0);
+    expect(result.actionableRecommendations.length).toBeGreaterThan(0);
+    expect(result.narrativeConclusion).toBeDefined();
+    expect(result.narrativeConclusion).toContain("Anda");
+    expect(result.narrativeConclusion).toContain("dan cenderung");
+    expect(result.narrativeConclusion).toContain("sehingga");
+  });
+
+  it("generates distinct multi-scenario conclusions based on varied respondent variables", () => {
+    // Profil A: Mahasiswa yang sering koding template dan dikejar deadline
+    const answersA: SurveySubmissionPayload = {
+      ...mockBaseAnswers,
+      primary_ai_tool: "Claude",
+      academic_activities: ["Membuat kode dari nol, buat fungsi, atau template coding", "Cari letak bug dan solusi saat kodingan error"],
+      usage_triggers: ["Dikejar tenggat waktu (deadline) atau tugas menumpuk"],
+      problem_solving_sequence: "Langsung tanya AI sebagai langkah pertama tanpa cari di sumber lain.",
+      dep_1: 4,
+      dep_2: 4,
+      dep_3: 4,
+      dep_4: 4,
+      dep_5: 4,
+      crit_10: 1,
+    };
+    const resultA = calculateDependencyScore(answersA);
+
+    // Profil B: Mahasiswa mandiri yang eksplorasi konsep
+    const answersB: SurveySubmissionPayload = {
+      ...mockBaseAnswers,
+      primary_ai_tool: "Google Gemini",
+      academic_activities: ["Brainstorming ide proyek, fitur aplikasi, atau alur sistem", "Merangkum materi yang diberikan dosen"],
+      usage_triggers: ["Belajar mandiri disaat tidak ada teman untuk berdiskusi bareng"],
+      problem_solving_sequence: "Buka AI dan sumber terpercaya bersamaan untuk membandingkan solusi.",
+      dep_1: 1,
+      dep_2: 1,
+      dep_3: 1,
+      dep_4: 1,
+      dep_5: 1,
+      crit_10: 4,
+    };
+    const resultB = calculateDependencyScore(answersB);
+
+    expect(resultA.narrativeConclusion).not.toBe(resultB.narrativeConclusion);
+    expect(resultA.narrativeConclusion).toContain("Claude");
+    expect(resultB.narrativeConclusion).toContain("Google Gemini");
+    expect(resultA.narrativeConclusion).toContain("tenggat waktu");
+    expect(resultB.narrativeConclusion).toContain("mengomparasikan");
+  });
+
+  it("validates NIM format M0403xxx and WhatsApp format wa.me/62xxx correctly via SurveySubmissionSchema", async () => {
+    const { SurveySubmissionSchema } = await import("../survey-schema");
+
+    // Valid data
+    const valid = SurveySubmissionSchema.safeParse(mockBaseAnswers);
+    expect(valid.success).toBe(true);
+
+    // Invalid NIM (random characters like ssssssssssss)
+    const invalidNim = SurveySubmissionSchema.safeParse({
+      ...mockBaseAnswers,
+      nim: "ssssssssssss",
+    });
+    expect(invalidNim.success).toBe(false);
+    if (!invalidNim.success) {
+      expect(invalidNim.error.issues[0].message).toContain("Format NIM tidak valid");
+    }
+
+    // Invalid WhatsApp (random characters like ssssssssssssssssssss)
+    const invalidWa = SurveySubmissionSchema.safeParse({
+      ...mockBaseAnswers,
+      whatsapp_number: "ssssssssssssssssssss",
+    });
+    expect(invalidWa.success).toBe(false);
+    if (!invalidWa.success) {
+      expect(invalidWa.error.issues[0].message).toContain("Format WhatsApp tidak valid");
+    }
+
+    // Valid alternate formats
+    const validWaUrl = SurveySubmissionSchema.safeParse({
+      ...mockBaseAnswers,
+      whatsapp_number: "https://wa.me/6281234567890",
+      nim: "m0403241015",
+    });
+    expect(validWaUrl.success).toBe(true);
   });
 });

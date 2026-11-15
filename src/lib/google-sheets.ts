@@ -84,7 +84,7 @@ export const SPREADSHEET_HEADERS = [
   // Evaluasi & Skor
   "Dependency Score (0-100)",
   "Dependency Band",
-  "Archetype",
+  "Status Evaluasi",
   "Journal Detection Accuracy (0-6)",
   "Debugging Autonomy Score",
   "Critical Verification Score",
@@ -174,10 +174,10 @@ export function formatSubmissionRow(
     // Scoring
     scoringResult.score,
     scoringResult.band,
-    scoringResult.archetype?.name || "-",
-    scoringResult.journalDetectionAccuracy?.correctCount ?? scoringResult.archetype?.metrics.journalDetectionScore ?? "-",
-    scoringResult.archetype?.metrics.debuggingAutonomy ?? "-",
-    scoringResult.archetype?.metrics.criticalVerification ?? "-",
+    scoringResult.bandLabel || "-",
+    scoringResult.journalDetectionAccuracy?.correctCount ?? scoringResult.metrics?.journalAccuracy.correct ?? "-",
+    scoringResult.metrics?.debuggingAutonomy ?? "-",
+    scoringResult.metrics?.criticalVerification ?? "-",
     scoringResult.scoringVersion,
   ];
 }

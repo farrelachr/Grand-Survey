@@ -9,9 +9,9 @@ import { SurveySubmissionPayload } from "../survey-schema";
 
 const mockAnswers: SurveySubmissionPayload = {
   respondent_name: "Farrel Alfachrezi",
-  nim: "G6401221001",
+  nim: "M0403241015",
   cohort_confirmation: "62",
-  whatsapp_number: "081234567890",
+  whatsapp_number: "wa.me/6281234567890",
   ipb_email: "farrelalfachrezi@apps.ipb.ac.id",
   primary_ai_tool: "ChatGPT",
   weekly_ai_duration: "Kadang-kadang (1–3 jam/hari)",
@@ -86,7 +86,7 @@ describe("Google Sheets Integration - Unit Tests", () => {
     expect(row[1]).toBe("2026-11-15T00:00:00Z");
     expect(row[2]).toBe("2026.1");
     expect(row[3]).toBe("Farrel Alfachrezi");
-    expect(row[4]).toBe("G6401221001");
+    expect(row[4]).toBe("M0403241015");
     expect(row[5]).toBe("Angkatan 62");
   });
 

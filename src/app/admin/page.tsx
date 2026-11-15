@@ -13,8 +13,11 @@ import {
   AlertTriangle,
   ShieldAlert,
   ArrowRight,
+  ExternalLink,
+  FileText,
 } from "lucide-react";
 import { SURVEY_VERSION, SCORING_VERSION } from "@/lib/survey-schema";
+import { evaluateJournalDetection } from "@/lib/scoring";
 
 export const metadata = {
   title: "Admin Dashboard — Grand Survey HIMALKOM 2026",
@@ -124,10 +127,10 @@ export default async function AdminDashboardPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E1E5DF] pb-6">
             <div>
               <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded bg-[#FAF5EB] border border-[#D5A85B]/30 text-[#D5A85B] text-[11px] font-bold uppercase tracking-wider mb-2">
-                Hak Akses Administrator
+                Hak Akses Admin
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#202522]">
-                Panel Agregat Riset HIMALKOM
+                Admin Dashboard
               </h1>
               <p className="text-xs text-[#737A74] mt-1">
                 Kuesioner v{SURVEY_VERSION} • Formula Penilaian v{SCORING_VERSION}
@@ -135,17 +138,27 @@ export default async function AdminDashboardPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
+              <a
+                href="https://docs.google.com/spreadsheets/d/1tnYjIVB3J004OpTJSn4dBOL-13h0pkis47GvXf6ky_I/edit?gid=0#gid=0"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-[#EBF2EE] text-[#174C3C] border border-[#174C3C]/30 px-3.5 py-2.5 rounded text-sm font-semibold hover:bg-[#DCEAE1] transition-colors shadow-2xs"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-[#174C3C]" />
+                <span>Buka Google Sheets</span>
+                <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+              </a>
               <Link
                 href="/admin/report"
-                className="inline-flex items-center gap-2 bg-[#FAF5EB] text-[#B88728] border border-[#D5A85B]/40 px-4 py-2.5 rounded text-sm font-semibold hover:bg-[#F3EAD3] transition-colors shadow-xs"
+                className="inline-flex items-center gap-2 bg-[#FAF5EB] text-[#B88728] border border-[#D5A85B]/40 px-3.5 py-2.5 rounded text-sm font-semibold hover:bg-[#F3EAD3] transition-colors shadow-2xs"
               >
                 <BarChart3 className="w-4 h-4 text-[#D5A85B]" />
-                <span>Laporan 54 Pertanyaan</span>
+                <span>Laporan 50 Pertanyaan</span>
               </Link>
               <a
                 href="/api/admin/export"
                 download
-                className="inline-flex items-center gap-2 bg-[#174C3C] text-white px-4 py-2.5 rounded text-sm font-semibold hover:bg-[#123B2F] transition-colors shadow-sm"
+                className="inline-flex items-center gap-2 bg-[#174C3C] text-white px-3.5 py-2.5 rounded text-sm font-semibold hover:bg-[#123B2F] transition-colors shadow-sm"
               >
                 <Download className="w-4 h-4" />
                 <span>Unduh CSV Lengkap</span>
@@ -165,9 +178,6 @@ export default async function AdminDashboardPage() {
               <p className="text-3xl font-black text-[#202522] mt-3">
                 {totalSubmissions}
               </p>
-              <span className="text-[11px] text-[#737A74] mt-1 block">
-                Ilkom IPB Angkatan 62
-              </span>
             </div>
 
             <div className="bg-[#FFFFFF] border border-[#E1E5DF] rounded p-6 shadow-sm">
@@ -192,48 +202,56 @@ export default async function AdminDashboardPage() {
               </span>
             </div>
 
-            <div className="bg-[#FFFFFF] border border-[#E1E5DF] rounded p-6 shadow-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-[#737A74]">
-                  Sinkronisasi Sheets
-                </span>
-                <FileSpreadsheet className="w-4 h-4 text-[#174C3C]" />
+            <div className="bg-[#FFFFFF] border border-[#E1E5DF] rounded p-6 shadow-sm flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-[#737A74]">
+                    Sinkronisasi Sheets
+                  </span>
+                  <FileSpreadsheet className="w-4 h-4 text-[#174C3C]" />
+                </div>
+                <p className="text-3xl font-black text-[#202522] mt-3">
+                  {syncLogs.filter((l) => l.status === "synced").length}
+                  <span className="text-sm font-normal text-[#737A74] ml-1.5">
+                    / {totalSubmissions}
+                  </span>
+                </p>
               </div>
-              <p className="text-3xl font-black text-[#202522] mt-3">
-                {syncLogs.filter((l) => l.status === "synced").length}
-                <span className="text-sm font-normal text-[#737A74] ml-1.5">
-                  / {totalSubmissions}
+              <div className="mt-3 pt-3 border-t border-[#E1E5DF] flex items-center justify-between">
+                <span className="text-[11px] text-[#737A74]">
+                  {hasGoogleSheetsConfig
+                    ? "Tersinkron otomatis"
+                    : "Belum dikonfigurasi"}
                 </span>
-              </p>
-              <span className="text-[11px] text-[#737A74] mt-1 block">
-                {hasGoogleSheetsConfig
-                  ? "Tersinkronisasi otomatis"
-                  : "Belum dikonfigurasi (Gunakan Ekspor CSV)"}
-              </span>
+                <a
+                  href="https://docs.google.com/spreadsheets/d/1tnYjIVB3J004OpTJSn4dBOL-13h0pkis47GvXf6ky_I/edit?gid=0#gid=0"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-[#174C3C] hover:underline"
+                >
+                  <span>Buka Spreadsheet</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
             </div>
           </div>
 
-          {/* Full Report Banner Card */}
-          <div className="bg-[#FFFFFF] border border-[#D5A85B]/50 rounded p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-5 relative overflow-hidden">
-            <div className="space-y-1 z-10">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-[#FAF5EB] text-[#B88728] text-[11px] font-bold uppercase tracking-wider">
-                <BarChart3 className="w-3.5 h-3.5" />
-                <span>Laporan Komprehensif per Pertanyaan</span>
-              </div>
-              <h2 className="text-lg font-bold text-[#202522] pt-1">
-                Visualisasi Grafik Lengkap untuk Seluruh 54 Pertanyaan
+          {/* Comprehensive Report Banner */}
+          <div className="bg-[#FFFFFF] border border-[#D5A85B]/40 rounded-xl p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
+            <div className="space-y-1">
+              <h2 className="text-base sm:text-lg font-bold text-[#202522] pt-1">
+                Charts Pertanyaan Skala
               </h2>
-              <p className="text-xs text-[#636B65] max-w-2xl leading-relaxed">
-                Tinjau distribusi statistik dan grafik batang untuk setiap butir pertanyaan non-essay (skala Likert, pilihan tunggal, dan pilihan berganda) dilengkapi filter per bagian, pencarian kata kunci, serta pagination.
-              </p>
             </div>
-            <Link
-              href="/admin/report"
-              className="inline-flex items-center justify-center gap-2 bg-[#174C3C] text-white px-5 py-2.5 rounded text-sm font-semibold hover:bg-[#123B2F] transition-colors shrink-0 shadow-sm"
-            >
-              <span>Buka Laporan Grafik</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            <div>
+              <Link
+                href="/admin/report"
+                className="inline-flex items-center gap-2 bg-[#174C3C] text-white px-5 py-2.5 rounded text-sm font-semibold hover:bg-[#123B2F] transition-colors shadow-2xs shrink-0"
+              >
+                <span>Buka Laporan Grafik</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
           </div>
 
           {/* Submissions Table with Pseudonymous IDs */}
@@ -241,11 +259,8 @@ export default async function AdminDashboardPage() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-base font-bold text-[#202522]">
-                  Daftar Submisi (Pseudonim Riset)
+                  Daftar Submission
                 </h2>
-                <p className="text-xs text-[#737A74] mt-0.5">
-                  Identitas email responden dilindungi dan dipisahkan dari tabel laporan ini.
-                </p>
               </div>
             </div>
 
@@ -259,6 +274,8 @@ export default async function AdminDashboardPage() {
                       <th className="py-2.5 px-2 font-semibold">Peminatan</th>
                       <th className="py-2.5 px-2 text-right font-semibold">Skor</th>
                       <th className="py-2.5 px-2 text-center font-semibold">Kategori</th>
+                      <th className="py-2.5 px-2 text-center font-semibold">Uji Jurnal</th>
+                      <th className="py-2.5 px-2 font-semibold">Alat Utama</th>
                       <th className="py-2.5 px-2 font-semibold">Status Sheets</th>
                       <th className="py-2.5 px-2 text-right font-semibold">Aksi</th>
                     </tr>
@@ -266,6 +283,14 @@ export default async function AdminDashboardPage() {
                   <tbody className="divide-y divide-[#E1E5DF]">
                     {submissions.map((sub) => {
                       const syncInfo = syncStatusMap.get(sub.id);
+                      const journalEval =
+                        sub.scoring_details?.journalDetectionAccuracy?.correctCount !== undefined
+                          ? {
+                              correctCount: sub.scoring_details.journalDetectionAccuracy.correctCount,
+                              scorePercentage: sub.scoring_details.journalDetectionAccuracy.scorePercentage,
+                            }
+                          : evaluateJournalDetection(sub.answers || {});
+
                       return (
                         <tr key={sub.id} className="hover:bg-[#F7F7F2]/50">
                           <td className="py-3 px-3 font-mono font-medium text-[#202522]">
@@ -298,6 +323,12 @@ export default async function AdminDashboardPage() {
                               {sub.dependency_category}
                             </span>
                           </td>
+                          <td className="py-3 px-2 text-center font-mono font-semibold text-[#174C3C]">
+                            {journalEval.correctCount} / 6
+                          </td>
+                          <td className="py-3 px-2 text-[#636B65] max-w-[120px] truncate">
+                            {sub.answers?.primary_ai_tool || "—"}
+                          </td>
                           <td className="py-3 px-2">
                             {syncInfo?.status === "synced" ? (
                               <span className="text-[11px] text-[#174C3C] font-semibold bg-[#EBF2EE] px-2 py-0.5 rounded">
@@ -324,7 +355,18 @@ export default async function AdminDashboardPage() {
                             )}
                           </td>
                           <td className="py-3 px-2 text-right">
-                            <AdminSyncRetry submissionId={sub.id} />
+                            <div className="flex items-center justify-end gap-1.5">
+                              <Link
+                                href={`/result/${sub.id}`}
+                                target="_blank"
+                                className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#174C3C] bg-[#EBF2EE] hover:bg-[#D8E8DF] px-2 py-1 rounded transition-colors"
+                                title="Buka Dokumen Hasil Evaluasi Responden"
+                              >
+                                <span>Hasil</span>
+                                <ExternalLink className="w-3 h-3" />
+                              </Link>
+                              <AdminSyncRetry submissionId={sub.id} />
+                            </div>
                           </td>
                         </tr>
                       );

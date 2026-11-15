@@ -17,6 +17,7 @@ interface RespondentAnswersViewerProps {
 }
 
 export function RespondentAnswersViewer({ answers }: RespondentAnswersViewerProps) {
+  const [isOpen, setIsOpen] = useState(false);
   const [selectedSection, setSelectedSection] = useState<number>(0);
   const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({
     1: true,
@@ -56,68 +57,96 @@ export function RespondentAnswersViewer({ answers }: RespondentAnswersViewerProp
   };
 
   return (
-    <div className="bg-[#FFFFFF] border border-[#E1E5DF] rounded p-6 sm:p-8 shadow-sm space-y-6">
-      {/* Header bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E1E5DF] pb-5">
-        <div>
-          <h2 className="text-lg sm:text-xl font-bold text-[#202522] flex items-center gap-2">
-            <FileText className="w-5 h-5 text-[#174C3C]" />
-            Salinan Jawaban Survei Anda
-          </h2>
-          <p className="text-xs text-[#636B65] mt-1">
-            Arsip resmi seluruh jawaban yang Anda isi pada kuesioner Grand Survey HIMALKOM 2026.
-          </p>
+    <div className="bg-[#FFFFFF] border border-[#E1E5DF] rounded-xl shadow-xs overflow-hidden transition-all">
+      {/* Accordion / Dropdown Trigger Header */}
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-4 hover:bg-[#FAFDFB] transition-colors focus:outline-none"
+        aria-expanded={isOpen}
+      >
+        <div className="flex items-start sm:items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-[#EBF2EE] text-[#174C3C] flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+            <FileText className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm sm:text-base font-bold text-[#202522]">
+                Salinan Jawaban Survei Anda
+              </h2>
+              <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-[#F7F7F2] text-[#636B65] border border-[#E1E5DF]">
+                Arsip Kuesioner
+              </span>
+            </div>
+            <p className="text-xs text-[#636B65] mt-0.5">
+              {isOpen
+                ? "Arsip resmi seluruh jawaban yang Anda isi pada kuesioner Grand Survey HIMALKOM 2026."
+                : "Klik untuk melihat rincian 50 pertanyaan dan jawaban Anda."}
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold text-[#202522] border border-[#E1E5DF] bg-[#FFFFFF] hover:bg-[#F7F7F2] transition-colors"
-          >
-            <Printer className="w-3.5 h-3.5 text-[#737A74]" />
-            <span>Cetak / PDF</span>
-          </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#174C3C] bg-[#EBF2EE] border border-[#174C3C]/20 hover:bg-[#DCEAE1] transition-colors">
+            <span>{isOpen ? "Tutup" : "Buka"}</span>
+            <ChevronDown
+              className={`w-4 h-4 transition-transform duration-200 ${
+                isOpen ? "rotate-180" : ""
+              }`}
+            />
+          </div>
         </div>
-      </div>
+      </button>
 
-      {/* Filter and Accordion Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2">
-          <Filter className="w-3.5 h-3.5 text-[#737A74]" />
-          <span className="font-semibold text-[#202522]">Filter Bagian:</span>
-          <select
-            value={selectedSection}
-            onChange={(e) => setSelectedSection(Number(e.target.value))}
-            className="p-1.5 bg-[#FFFFFF] border border-[#E1E5DF] rounded text-xs text-[#202522] focus:border-[#174C3C] focus:ring-1 focus:ring-[#174C3C]"
-          >
-            <option value={0}>Semua Bagian (1–9)</option>
-            {SURVEY_SECTIONS_DATA.map((s) => (
-              <option key={s.sectionNumber} value={s.sectionNumber}>
-                Bagian {s.sectionNumber}: {s.title}
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* Dropdown Content (Default Terlipat) */}
+      {isOpen && (
+        <div className="border-t border-[#E1E5DF] p-5 sm:p-6 space-y-5 bg-[#FFFFFF]">
+          {/* Action / Toolbar bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs pb-1">
+            <div className="flex items-center gap-2">
+              <Filter className="w-3.5 h-3.5 text-[#737A74]" />
+              <span className="font-semibold text-[#202522]">Filter Bagian:</span>
+              <select
+                value={selectedSection}
+                onChange={(e) => setSelectedSection(Number(e.target.value))}
+                className="p-1.5 bg-[#FFFFFF] border border-[#E1E5DF] rounded text-xs text-[#202522] focus:border-[#174C3C] focus:ring-1 focus:ring-[#174C3C]"
+              >
+                <option value={0}>Semua Bagian (1–9)</option>
+                {SURVEY_SECTIONS_DATA.map((s) => (
+                  <option key={s.sectionNumber} value={s.sectionNumber}>
+                    Bagian {s.sectionNumber}: {s.title}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => toggleAll(true)}
-            className="text-xs text-[#174C3C] hover:underline font-medium"
-          >
-            Buka Semua
-          </button>
-          <span className="text-[#E1E5DF]">•</span>
-          <button
-            type="button"
-            onClick={() => toggleAll(false)}
-            className="text-xs text-[#737A74] hover:underline font-medium"
-          >
-            Tutup Semua
-          </button>
-        </div>
-      </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => toggleAll(true)}
+                className="text-xs text-[#174C3C] hover:underline font-medium"
+              >
+                Buka Semua
+              </button>
+              <span className="text-[#E1E5DF]">•</span>
+              <button
+                type="button"
+                onClick={() => toggleAll(false)}
+                className="text-xs text-[#737A74] hover:underline font-medium"
+              >
+                Tutup Semua
+              </button>
+              <span className="text-[#E1E5DF]">•</span>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold text-[#202522] border border-[#E1E5DF] bg-[#FFFFFF] hover:bg-[#F7F7F2] transition-colors"
+              >
+                <Printer className="w-3.5 h-3.5 text-[#737A74]" />
+                <span>Cetak / PDF</span>
+              </button>
+            </div>
+          </div>
 
       {/* Sections List */}
       <div className="space-y-4">
@@ -263,6 +292,8 @@ export function RespondentAnswersViewer({ answers }: RespondentAnswersViewerProp
           );
         })}
       </div>
+        </div>
+      )}
     </div>
   );
 }
