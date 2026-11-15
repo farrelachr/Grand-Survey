@@ -21,31 +21,71 @@ import {
   ArrowLeft,
   BarChart3,
   Layers,
+  Copy,
+  Check,
 } from "lucide-react";
 import Link from "next/link";
+import { copyChartAsImage } from "@/lib/chart-export";
 
 interface ReportViewerProps {
   items: AnalyzedQuestionItem[];
   totalRespondents: number;
 }
 
-const SECTION_OPTIONS = [
-  { value: 0, label: "Semua Bagian (54 Pertanyaan)" },
-  { value: 1, label: "Bagian 1: Profil Responden (4)" },
-  { value: 2, label: "Bagian 2: Pola Penggunaan AI (6)" },
-  { value: 3, label: "Bagian 3: Ketergantungan terhadap AI (8)" },
-  { value: 4, label: "Bagian 4: Coding & Problem Solving (7)" },
-  { value: 5, label: "Bagian 5: AI dan Proses Belajar (7)" },
-  { value: 6, label: "Bagian 6: Kemandirian & Critical Thinking (7)" },
-  { value: 7, label: "Bagian 7: Persepsi & Batas Penggunaan (7)" },
-  { value: 8, label: "Bagian 8: Masa Depan Mahasiswa Ilkom (8)" },
-];
-
 export function ReportViewer({ items, totalRespondents }: ReportViewerProps) {
   const [selectedSection, setSelectedSection] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(6);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [downloadedId, setDownloadedId] = useState<string | null>(null);
+
+  const handleCopyChart = async (item: AnalyzedQuestionItem) => {
+    const container = document.getElementById(`chart-card-${item.id}`);
+    if (!container) return;
+
+    try {
+      const res = await copyChartAsImage({
+        containerElement: container,
+        title: item.title,
+        categoryLabel: `No. ${item.index} • Bagian ${item.sectionNumber}: ${item.sectionTitle}`,
+        metaText:
+          item.mean !== undefined
+            ? `Rata-rata: ${item.mean.toFixed(2)} / 4.00 (N = ${item.totalAnswered})`
+            : `Total Responden: ${item.totalAnswered}`,
+        filename: `q-${item.index}-${item.id}`,
+      });
+
+      if (res === "copied") {
+        setCopiedId(item.id);
+        setTimeout(() => setCopiedId(null), 2500);
+      } else {
+        setDownloadedId(item.id);
+        setTimeout(() => setDownloadedId(null), 2500);
+      }
+    } catch (err) {
+      console.error("Gagal menyalin grafik:", err);
+    }
+  };
+
+  const sectionOptions = useMemo(() => {
+    const opts = [{ value: 0, label: `Semua Bagian (${items.length} Pertanyaan Teranalisis)` }];
+    const counts: Record<number, { title: string; count: number }> = {};
+    for (const item of items) {
+      if (!counts[item.sectionNumber]) {
+        counts[item.sectionNumber] = { title: item.sectionTitle, count: 0 };
+      }
+      counts[item.sectionNumber].count++;
+    }
+    for (const [numStr, data] of Object.entries(counts)) {
+      const num = Number(numStr);
+      opts.push({
+        value: num,
+        label: `Bagian ${num}: ${data.title} (${data.count})`,
+      });
+    }
+    return opts;
+  }, [items]);
 
   // Filter items
   const filteredItems = useMemo(() => {
@@ -129,7 +169,7 @@ export function ReportViewer({ items, totalRespondents }: ReportViewerProps) {
                 onChange={(e) => handleSectionChange(Number(e.target.value))}
                 className="w-full pl-3 pr-8 py-2 bg-[#F7F7F2] border border-[#E1E5DF] rounded text-xs text-[#202522] focus:border-[#174C3C] cursor-pointer"
               >
-                {SECTION_OPTIONS.map((opt) => (
+                {sectionOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
                   </option>
@@ -194,7 +234,7 @@ export function ReportViewer({ items, totalRespondents }: ReportViewerProps) {
       {currentItems.length > 0 ? (
         <div className="space-y-6">
           {currentItems.map((item) => {
-            const chartHeight = Math.max(180, item.chartData.length * 38);
+            const chartHeight = Math.max(200, item.chartData.length * 48);
 
             return (
               <div
@@ -231,26 +271,52 @@ export function ReportViewer({ items, totalRespondents }: ReportViewerProps) {
                     )}
                   </div>
 
-                  {item.mean !== undefined && (
-                    <div className="sm:text-right shrink-0 bg-[#F7F7F2] p-2.5 rounded border border-[#E1E5DF]">
-                      <span className="text-[10px] uppercase font-semibold text-[#737A74] block">
-                        Rata-rata Skor
-                      </span>
-                      <span className="text-base font-black text-[#174C3C]">
-                        {item.mean.toFixed(2)}
-                      </span>
-                      <span className="text-[11px] text-[#737A74] font-medium ml-1">/ 4.00</span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+                    {item.mean !== undefined && (
+                      <div className="text-right bg-[#F7F7F2] p-2 rounded border border-[#E1E5DF]">
+                        <span className="text-[10px] uppercase font-semibold text-[#737A74] block">
+                          Rata-rata Skor
+                        </span>
+                        <span className="text-base font-black text-[#174C3C]">
+                          {item.mean.toFixed(2)}
+                        </span>
+                        <span className="text-[11px] text-[#737A74] font-medium ml-1">/ 4.00</span>
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => handleCopyChart(item)}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded text-xs font-semibold text-[#174C3C] border border-[#174C3C]/20 bg-[#EBF2EE] hover:bg-[#DCEAE1] transition-all cursor-pointer shadow-2xs"
+                      title="Salin grafik sebagai gambar PNG ke clipboard"
+                    >
+                      {copiedId === item.id ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-[#174C3C]" />
+                          <span>Tersalin!</span>
+                        </>
+                      ) : downloadedId === item.id ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-[#174C3C]" />
+                          <span>Terunduh!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5 text-[#174C3C]" />
+                          <span>Salin Grafik</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Question Horizontal Bar Chart */}
-                <div style={{ height: `${chartHeight}px` }} className="w-full">
+                <div id={`chart-card-${item.id}`} style={{ height: `${chartHeight}px` }} className="w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={item.chartData}
                       layout="vertical"
-                      margin={{ top: 5, right: 35, left: 10, bottom: 5 }}
+                      margin={{ top: 8, right: 30, left: 10, bottom: 8 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E1E5DF" />
                       <XAxis
@@ -261,17 +327,22 @@ export function ReportViewer({ items, totalRespondents }: ReportViewerProps) {
                       <YAxis
                         dataKey="name"
                         type="category"
+                        interval={0}
                         tick={{ fill: "#202522", fontSize: 11 }}
-                        width={180}
+                        width={210}
+                        tickFormatter={(val: string) => {
+                          if (!val) return "";
+                          return val.length > 28 ? `${val.slice(0, 26)}…` : val;
+                        }}
                       />
                       <Tooltip
                         content={({ active, payload }) => {
                           if (active && payload && payload.length) {
                             const data = payload[0].payload;
                             return (
-                              <div className="bg-[#FFFFFF] p-2.5 rounded border border-[#E1E5DF] shadow-md text-xs max-w-xs">
-                                <p className="font-bold text-[#202522]">{data.name}</p>
-                                <p className="text-[#174C3C] mt-1 font-semibold">
+                              <div className="bg-[#FFFFFF] p-2.5 rounded border border-[#E1E5DF] shadow-md text-xs max-w-sm">
+                                <p className="font-bold text-[#202522] leading-snug">{data.name}</p>
+                                <p className="text-[#174C3C] mt-1.5 font-semibold">
                                   {data.count} responden ({data.percentage}%)
                                 </p>
                               </div>
@@ -297,18 +368,20 @@ export function ReportViewer({ items, totalRespondents }: ReportViewerProps) {
                   </ResponsiveContainer>
                 </div>
 
-                {/* Summary Table Row Below Chart */}
-                <div className="mt-4 pt-3 border-t border-[#E1E5DF] flex flex-wrap gap-2 text-xs">
+                {/* Clear, Complete Legend Breakdown Below Chart */}
+                <div className="mt-5 pt-4 border-t border-[#E1E5DF] grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
                   {item.chartData.map((cd, idx) => (
                     <div
                       key={idx}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#F7F7F2] border border-[#E1E5DF]"
+                      className="flex items-start justify-between gap-3 p-2.5 rounded bg-[#F7F7F2] border border-[#E1E5DF]"
                     >
-                      <span className="font-medium text-[#636B65] truncate max-w-[140px]" title={cd.name}>
-                        {cd.name}:
+                      <span className="font-medium text-[#202522] leading-snug">
+                        {cd.name}
                       </span>
-                      <span className="font-bold text-[#202522]">{cd.count}</span>
-                      <span className="text-[10px] text-[#737A74]">({cd.percentage}%)</span>
+                      <div className="shrink-0 flex items-center gap-1.5 font-bold text-[#174C3C] bg-[#FFFFFF] px-2 py-0.5 rounded border border-[#E1E5DF]">
+                        <span>{cd.count}</span>
+                        <span className="text-[10px] text-[#737A74] font-normal">({cd.percentage}%)</span>
+                      </div>
                     </div>
                   ))}
                 </div>

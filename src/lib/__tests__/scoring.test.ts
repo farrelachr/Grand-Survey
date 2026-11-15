@@ -3,68 +3,71 @@ import {
   calculateDependencyScore,
   normalizeLikertScore,
   getScoreCategory,
+  evaluateJournalDetection,
 } from "../scoring";
 import { SurveySubmissionPayload } from "../survey-schema";
 
 const mockBaseAnswers: SurveySubmissionPayload = {
   respondent_name: "Farrel Alfachrezi",
-  cohort_confirmation: "Angkatan 62 (2025)",
-  cs_interest: "Software Engineering & Web/Mobile Dev",
-  ai_usage_frequency: "Setiap hari (beberapa kali sehari)",
-  ai_tools_used: ["ChatGPT (OpenAI)", "Claude (Anthropic)"],
+  nim: "G6401221001",
+  cohort_confirmation: "62",
+  whatsapp_number: "081234567890",
+  ipb_email: "farrelalfachrezi@apps.ipb.ac.id",
   primary_ai_tool: "ChatGPT",
-  weekly_ai_frequency: "6 - 10 jam per minggu",
-  academic_activities: ["Mengerjakan tugas coding / praktikum"],
-  usage_triggers: ["Menghadapi error / bug yang sulit dipecahkan"],
-  session_duration: "30 - 60 menit",
-  ai_vs_traditional: "Seimbang antara AI dan sumber lain",
+  weekly_ai_duration: "Kadang-kadang (1–3 jam/hari)",
+  academic_activities: ["Minta penjelasan konsep, teori, atau algoritma yang rumit"],
+  usage_triggers: ["Ingin mempercepat proses pengerjaan (efisiensi waktu)"],
+  problem_solving_sequence: "Tanya AI dulu untuk gambaran awal, baru cek ulang di sumber terpercaya.",
   dep_1: 1,
   dep_2: 1,
   dep_3: 1,
   dep_4: 1,
   dep_5: 1,
-  dep_6: 4, // reverse
-  dep_7: 4, // reverse
-  dep_8: 4, // reverse
-  coding_first_action: "Membaca pesan error dan stack trace mandiri terlebih dahulu",
-  code_generation_frequency: "Kadang-kadang",
-  code_debugging_frequency: "Kadang-kadang",
-  code_explanation_frequency: "Sering",
-  ability_explain_ai_code: "Sangat mampu",
-  use_ununderstood_code: "Tidak pernah",
-  test_ai_code_before_use: "Selalu diuji menyeluruh",
-  learn_faster_concepts: 3,
-  learn_difficult_concepts: 3,
-  learn_alternative_approaches: 3,
-  learn_reduced_reliance_others: 2,
-  learn_prioritize_completion: 2,
-  learn_attempt_understand: 4,
-  learn_encountered_hallucination: "Cukup sering",
+  journal_case_1: "Real",
+  journal_case_2: "Real",
+  journal_case_3: "Real",
+  journal_case_4: "Fake",
+  journal_case_5: "Fake",
+  journal_case_6: "Fake",
+  journal_confidence: "Sangat Yakin (100%)",
+  journal_reasoning: "DOI terdaftar dan pengarang konsisten dengan institusi afiliasi.",
   crit_1: 4,
   crit_2: 4,
   crit_3: 4,
-  crit_4: 4,
+  crit_4: 2,
   crit_5: 4,
   crit_6: 4,
   crit_7: 1,
-  boundary_explain_material: "Sangat etis dan dianjurkan",
-  boundary_sample_code: "Sangat wajar dan etis",
-  boundary_debugging: "Sangat wajar dan efisien",
-  boundary_entire_assignment: "Pelanggaran integritas akademik serius",
-  boundary_ununderstood_answer: "Sangat tidak dapat dibenarkan",
-  boundary_threshold_dependency: "Merasa panik saat harus coding tanpa AI",
-  boundary_rules_needed: "Sangat perlu: Aturan tertulis yang tegas",
-  future_career_importance: 4,
-  future_proficiency_need: 4,
-  future_foundational_cs: 4,
-  future_problem_solving: 4,
-  future_prevent_overdependence: 4,
-  future_top_skills: ["Problem Solving & Algorithmic Thinking"],
-  future_himalkom_programs: ["Workshop AI Tools & Ethical Engineering"],
-  future_ideal_usage: "Co-pilot berpikir setelah ide dan logika dipahami",
-  open_biggest_challenge: "Tantangan dalam menjaga ketajaman berpikir mandiri.",
-  open_effective_learning_tips: "Membuat batasan waktu mandiri sebelum bertanya.",
-  open_himalkom_initiative: "Workshop berkala tentang coding tanpa AI.",
+  crit_8: 4,
+  crit_9: 1,
+  crit_10: 4,
+  learn_1: 3,
+  learn_2: 3,
+  learn_3: 3,
+  learn_4: 3,
+  learn_5: 3,
+  learn_6: 2,
+  learn_7: 1,
+  learn_8: 2,
+  learn_9: 3,
+  learn_practice_frequency: "Sering",
+  boundary_explain_material: "Ya, sangat wajar",
+  boundary_sample_code: "Ya, sangat wajar",
+  boundary_debugging: "Ya, sangat wajar",
+  boundary_entire_assignment: "Tidak wajar",
+  boundary_threshold_essay: "Ketika mahasiswa tidak lagi mampu bernalar atau mencari solusi tanpa bantuan AI.",
+  future_labor_change: 4,
+  future_ai_competence: 4,
+  future_core_cs_needed: 4,
+  future_problem_solving_key: 4,
+  future_continuous_learning: 4,
+  future_most_important_skill: ["B. Problem solving dan critical thinking."],
+  future_biggest_challenge: ["B. Mempertahankan kemampuan fundamental programming di tengah otomatisasi."],
+  future_needed_programs: ["B. Pelatihan fundamental programming dan problem solving di era AI."],
+  future_ideal_graduate_profile: "Lulusan yang menguasai fondasi algoritma kuat dan bijak mengorkestrasi AI.",
+  feedback_task_practical_usage: "AI sangat bermanfaat sebagai akselerator jika pemahaman dasar tetap diprioritaskan.",
+  feedback_independent_thinking: "Rutin melatih coding mandiri tanpa bantuan AI dan verifikasi dokumentasi.",
+  feedback_lecturer_academic_response: "Dosen sebaiknya mengintegrasikan studi kasus evaluasi kritis AI dan responsi tatap muka.",
 };
 
 describe("Scoring Engine - Unit Tests", () => {
@@ -75,17 +78,7 @@ describe("Scoring Engine - Unit Tests", () => {
     expect(normalizeLikertScore(4, false).normalized).toBe(100);
   });
 
-  it("normalizes Likert reversed scores correctly", () => {
-    // For reversed statements:
-    // 1 (Strongly Disagree) -> 5 - 1 = 4 -> normalized = 100
-    // 4 (Strongly Agree) -> 5 - 4 = 1 -> normalized = 0
-    expect(normalizeLikertScore(1, true).normalized).toBe(100);
-    expect(normalizeLikertScore(2, true).normalized).toBeCloseTo(66.67, 1);
-    expect(normalizeLikertScore(3, true).normalized).toBeCloseTo(33.33, 1);
-    expect(normalizeLikertScore(4, true).normalized).toBe(0);
-  });
-
-  it("produces index 0 when all dependency responses are lowest and independence responses are highest", () => {
+  it("produces index 0 when all 5 dependency responses are 1 (lowest)", () => {
     const answers: SurveySubmissionPayload = {
       ...mockBaseAnswers,
       dep_1: 1,
@@ -93,9 +86,6 @@ describe("Scoring Engine - Unit Tests", () => {
       dep_3: 1,
       dep_4: 1,
       dep_5: 1,
-      dep_6: 4, // 5-4 = 1 -> 0
-      dep_7: 4, // 5-4 = 1 -> 0
-      dep_8: 4, // 5-4 = 1 -> 0
     };
 
     const result = calculateDependencyScore(answers);
@@ -103,17 +93,14 @@ describe("Scoring Engine - Unit Tests", () => {
     expect(result.band).toBe("RENDAH");
   });
 
-  it("produces index 100 when all responses indicate maximum dependency", () => {
+  it("produces index 100 when all 5 dependency responses are 4 (maximum)", () => {
     const answers: SurveySubmissionPayload = {
       ...mockBaseAnswers,
-      dep_1: 4, // 100
-      dep_2: 4, // 100
-      dep_3: 4, // 100
-      dep_4: 4, // 100
-      dep_5: 4, // 100
-      dep_6: 1, // 5-1 = 4 -> 100
-      dep_7: 1, // 5-1 = 4 -> 100
-      dep_8: 1, // 5-1 = 4 -> 100
+      dep_1: 4,
+      dep_2: 4,
+      dep_3: 4,
+      dep_4: 4,
+      dep_5: 4,
     };
 
     const result = calculateDependencyScore(answers);
@@ -121,23 +108,47 @@ describe("Scoring Engine - Unit Tests", () => {
     expect(result.band).toBe("TINGGI");
   });
 
-  it("calculates exact mathematical mean for mixed responses", () => {
-    // 4 items with 100, 4 items with 0 -> mean = 50.00
+  it("calculates exact mathematical score for intermediate responses", () => {
+    // raw values: 3, 2, 3, 2, 3 -> sum = 13.
+    // Normalized: ((13 - 5) / 15) * 100 = (8/15)*100 = 53.33
     const answers: SurveySubmissionPayload = {
       ...mockBaseAnswers,
-      dep_1: 4, // 100
-      dep_2: 4, // 100
-      dep_3: 4, // 100
-      dep_4: 4, // 100
-      dep_5: 1, // 0
-      dep_6: 4, // 0
-      dep_7: 4, // 0
-      dep_8: 4, // 0
+      dep_1: 3,
+      dep_2: 2,
+      dep_3: 3,
+      dep_4: 2,
+      dep_5: 3,
     };
 
     const result = calculateDependencyScore(answers);
-    expect(result.score).toBe(50);
+    expect(result.score).toBeCloseTo(53.33, 1);
     expect(result.band).toBe("SEDANG");
+  });
+
+  it("correctly evaluates Case Journal detection accuracy", () => {
+    const answers = {
+      journal_case_1: "Real",
+      journal_case_2: "Real",
+      journal_case_3: "Real",
+      journal_case_4: "Fake",
+      journal_case_5: "Fake",
+      journal_case_6: "Fake",
+    };
+    const evalResult = evaluateJournalDetection(answers);
+    expect(evalResult.correctCount).toBe(6);
+    expect(evalResult.scorePercentage).toBe(100);
+
+    const partialAnswers = {
+      journal_case_1: "Real",
+      journal_case_2: "Fake", // wrong
+      journal_case_3: "Real",
+      journal_case_4: "Real", // wrong
+      journal_case_5: "Fake",
+      journal_case_6: "Fake",
+    };
+    const partialResult = evaluateJournalDetection(partialAnswers);
+    expect(partialResult.correctCount).toBe(4);
+    expect(partialResult.scorePercentage).toBe(67);
   });
 
   it("correctly handles score category boundaries", () => {
@@ -155,7 +166,7 @@ describe("Scoring Engine - Unit Tests", () => {
     delete incompleteAnswers.dep_3;
 
     expect(() => calculateDependencyScore(incompleteAnswers as SurveySubmissionPayload)).toThrow(
-      "Missing answer for required dependency statement: dep_3"
+      "Data kuesioner tidak lengkap: nilai 'dep_3' tidak valid atau belum diisi."
     );
   });
 });

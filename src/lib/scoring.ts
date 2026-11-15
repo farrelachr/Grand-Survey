@@ -6,6 +6,7 @@ export interface CardMetrics {
   debuggingAutonomy: number;
   criticalVerification: number;
   dependencyScore: number;
+  journalDetectionScore?: number; // 0 - 6 correct
 }
 
 export interface PersonalizedSolution {
@@ -71,59 +72,65 @@ export interface ScoringResult {
   personalizedSolutions?: PersonalizedSolution[];
   superpowers?: SuperpowerInsight[];
   blindspots?: BlindSpotInsight[];
+  journalDetectionAccuracy?: {
+    correctCount: number;
+    totalCases: number;
+    scorePercentage: number;
+  };
 }
 
+// 5 Statements from Bagian 3: Ketergantungan terhadap AI
 export const DEPENDENCY_STATEMENTS = [
   {
     id: "dep_1",
-    statement: "Saya merasa kesulitan menyelesaikan tugas akademik tanpa bantuan AI.",
+    statement: "Saya merasa kesulitan mengerjakan tugas tanpa AI.",
     isReversed: false,
   },
   {
     id: "dep_2",
-    statement: "Saya cenderung langsung menggunakan AI sebelum mencoba memikirkan solusi sendiri.",
+    statement: "Saya menggunakan AI sebelum mencoba menyelesaikan masalah sendiri.",
     isReversed: false,
   },
   {
     id: "dep_3",
-    statement: "Pekerjaan akademik saya terasa jauh lebih berat apabila tidak ada AI.",
+    statement: "Saya merasa pekerjaan menjadi lebih sulit tanpa AI.",
     isReversed: false,
   },
   {
     id: "dep_4",
-    statement: "Saya menggunakan AI untuk hampir setiap tugas akademik yang saya kerjakan.",
+    statement: "Saya menggunakan AI dalam hampir setiap tugas akademik.",
     isReversed: false,
   },
   {
     id: "dep_5",
-    statement: "Saya meminta AI untuk memberikan solusi lengkap tugas saya.",
+    statement: "Saya meminta AI memberikan solusi lengkap untuk tugas saya.",
     isReversed: false,
-  },
-  {
-    id: "dep_6",
-    statement: "Saya tetap mampu menyelesaikan tugas akademik dengan baik meskipun tanpa AI.",
-    isReversed: true,
-  },
-  {
-    id: "dep_7",
-    statement: "Saya selalu berusaha menyelesaikan masalah secara mandiri terlebih dahulu sebelum bertanya ke AI.",
-    isReversed: true,
-  },
-  {
-    id: "dep_8",
-    statement: "Saya memperlakukan AI sebagai alat bantu berpikir, bukan pengganti proses berpikir saya.",
-    isReversed: true,
   },
 ] as const;
 
 /**
+ * Journal Ground Truth (3 Real, 3 Fake) from Bagian 4
+ */
+export const JOURNAL_GROUND_TRUTH: Record<string, "Real" | "Fake"> = {
+  journal_case_1: "Real", // Dirgahayu & Parsa 2019
+  journal_case_2: "Real", // Kobayashi & Ide 2022
+  journal_case_3: "Real", // Tsuchiya & Sonobe 2025
+  journal_case_4: "Fake", // Kusumawardhani & Prasetyo 2023 (Fake)
+  journal_case_5: "Fake", // Watanabe, Takahashi, Sato 2024 (Fake)
+  journal_case_6: "Fake", // Nugroho, Wijaya, Darmawan 2025 (Fake)
+};
+
+/**
  * Normalizes a 1–4 Likert rating into a 0–100 scale.
  * 1 -> 0
- * 2 -> 33.333333333333336
- * 3 -> 66.66666666666667
+ * 2 -> 33.33
+ * 3 -> 66.67
  * 4 -> 100
  */
-export function normalizeLikertScore(rawLikert: number, isReversed: boolean): { effectiveScore: number; normalized: number } {
+export function normalizeLikertScore(
+  rawLikert: number,
+  isReversed: boolean
+): { effectiveScore: number; normalized: number } {
   if (rawLikert < 1 || rawLikert > 4) {
     throw new Error(`Invalid Likert value: ${rawLikert}. Must be between 1 and 4.`);
   }
@@ -149,7 +156,7 @@ export function getScoreCategory(score: number): { band: DependencyBand; label: 
       band: "RENDAH",
       label: "Ketergantungan Rendah",
       description:
-        "Kemandirian kamu jempolan! Kamu pakai AI seperlunya aja dan tetap mengutamakan logika sendiri buat mecahin problem koding.",
+        "Kemandirian nalar Anda sangat kokoh! Anda memposisikan AI seperlunya dan tetap mengutamakan penalaran logika sendiri dalam memecahkan problem akademik.",
     };
   }
 
@@ -158,7 +165,7 @@ export function getScoreCategory(score: number): { band: DependencyBand; label: 
       band: "SEDANG",
       label: "Ketergantungan Sedang",
       description:
-        "Penggunaan AI kamu cukup seimbang. Kamu aktif memanfaatkan AI buat bantu tugas, tapi jalan ceritanya tetap kamu yang pegang dan pahami.",
+        "Pola penggunaan AI Anda tergolong proporsional. Anda aktif memanfaatkan AI untuk efisiensi, namun alur konseptual dan kendali pemahaman tetap berada di tangan Anda.",
     };
   }
 
@@ -166,8 +173,25 @@ export function getScoreCategory(score: number): { band: DependencyBand; label: 
     band: "TINGGI",
     label: "Ketergantungan Tinggi",
     description:
-      "Kamu kelihatan sangat bergantung sama AI buat tugas kuliah. Hati-hati, nalar koding dasar kamu bisa kagok pas ujian luring tanpa internet atau sesi responsi.",
+      "Tingkat ketergantungan Anda terhadap AI cukup signifikan. Berhati-hatilah agar insting dasar problem-solving dan intuisi teknis tidak menurun saat menghadapi ujian luring atau sesi responsi.",
   };
+}
+
+/**
+ * Evaluates Case Journal detection accuracy.
+ */
+export function evaluateJournalDetection(answers: Record<string, any>) {
+  let correctCount = 0;
+  const totalCases = 6;
+
+  for (const [key, correctVal] of Object.entries(JOURNAL_GROUND_TRUTH)) {
+    if (answers[key] === correctVal) {
+      correctCount++;
+    }
+  }
+
+  const scorePercentage = Math.round((correctCount / totalCases) * 100);
+  return { correctCount, totalCases, scorePercentage };
 }
 
 /**
@@ -176,43 +200,44 @@ export function getScoreCategory(score: number): { band: DependencyBand; label: 
 function generateObservations(answers: SurveySubmissionPayload): string[] {
   const observations: string[] = [];
 
-  // Coding observation
-  if (answers.coding_first_action?.includes("Langsung copy-paste")) {
+  // Problem solving sequence
+  const seq = answers.problem_solving_sequence || "";
+  if (seq.includes("Langsung tanya AI sebagai langkah pertama")) {
     observations.push(
-      "Refleks pertama Anda saat menemui error coding adalah langsung menyerahkannya ke AI, yang dapat mengurangi kesempatan melatih intuisi pembacaan stack trace."
+      "Refleks pertama Anda saat menemui kendala adalah langsung menanyakan ke AI tanpa mencari di sumber lain, yang berpotensi mengurangi latihan analisis stack trace mandiri."
     );
-  } else if (answers.coding_first_action?.includes("Membaca pesan error")) {
+  } else if (seq.includes("Tanya AI dulu untuk gambaran awal, baru cek ulang")) {
     observations.push(
-      "Anda mempertahankan disiplin diagnosis mandiri dengan membaca stack trace terlebih dahulu sebelum mencari bantuan eksternal."
+      "Anda menerapkan strategi eksplorasi awal dengan AI yang kemudian diverifikasi silang ke sumber terpercaya."
+    );
+  } else if (seq.includes("Jarang pakai AI")) {
+    observations.push(
+      "Anda mempertahankan disiplin problem-solving mandiri dengan mengutamakan dokumentasi resmi dan diskusi sejawat."
     );
   }
 
-  // Code comprehension
-  if (answers.use_ununderstood_code?.includes("Sering") || answers.use_ununderstood_code?.includes("beberapa kali")) {
+  // Critical thinking & hallucination incident
+  if (Number(answers.crit_9) >= 3) {
     observations.push(
-      "Anda teridentifikasi pernah memanfaatkan kode dari AI tanpa memahami logikanya secara tuntas, umumnya dipicu oleh tekanan tenggat waktu tugas."
+      "Anda pernah mengumpulkan tugas berbasis AI yang memuat kekeliruan logika tanpa disadari sebelumnya, menandakan perlunya pengetesan eksekusi yang lebih teliti."
+    );
+  }
+
+  // Responsi readiness
+  if (Number(answers.crit_10) >= 3) {
+    observations.push(
+      "Anda memiliki kesiapan akuntabilitas akademik yang baik karena mampu menguraikan kembali alur logika jawaban buatan AI di hadapan dosen atau asisten praktikum."
     );
   } else {
     observations.push(
-      "Anda memiliki komitmen yang konsisten untuk selalu memahami logika kode buatan AI sebelum mengadopsinya dalam tugas praktikum."
+      "Tingkat kepercayaan diri Anda dalam menjelaskan alur logika kode/jawaban AI pada sesi responsi masih berpeluang diperkuat."
     );
   }
 
-  // Verification & Critical Thinking
-  if (answers.crit_4 >= 3 && answers.crit_6 >= 3) {
+  // Learning impact
+  if (Number(answers.learn_6) >= 3 || Number(answers.learn_8) >= 3) {
     observations.push(
-      "Sikap kritis Anda dalam memverifikasi dan menganalisis penalaran di balik output AI tergolong matang dan berorientasi validasi."
-    );
-  } else {
-    observations.push(
-      "Tingkat verifikasi mandiri terhadap keluaran AI masih berpeluang ditingkatkan, khususnya dalam melakukan uji silang dengan dokumentasi resmi."
-    );
-  }
-
-  // Learning vs Completion Priority
-  if (answers.learn_prioritize_completion >= 3) {
-    observations.push(
-      "Dorongan efisiensi dan penyelesaian tugas cepat kadang menggeser prioritas pemahaman konseptual yang mendalam."
+      "Tekanan efisiensi penyelesaian tugas cenderung mendominasi proses belajar Anda dibandingkan pendalaman pemahaman materi konseptual."
     );
   }
 
@@ -226,21 +251,21 @@ function generateRecommendations(score: number, answers: SurveySubmissionPayload
   const recommendations: string[] = [];
 
   recommendations.push(
-    "Lakukan sesi 'AI-Free Coding': Sisihkan 1–2 jam per minggu untuk memecahkan problem algoritma atau debugging murni menggunakan debugger bawaan IDE dan dokumentasi resmi."
+    "Terapkan Kebiasaan '2-Minute Self Debug': Luangkan 2 menit pertama untuk membaca nomor baris dan pesan error sebelum meminta bantuan AI agar intuisi debugging Anda tetap tajam."
   );
 
   recommendations.push(
-    "Posisikan AI sebagai Socrates (Tutor Berpikir): Alih-alih meminta solusi jadi, instruksikan AI dengan prompt 'Berikan saya petunjuk konsep atau pertanyaan penuntun tanpa memberikan kode lengkap'."
+    "Prompt Sokrates (Tutor Berpikir): Alih-alih meminta solusi utuh, gunakan prompt: 'Berikan saya petunjuk konsep atau pertanyaan penuntun tanpa memberikan kode lengkap'."
   );
 
-  if (answers.ability_explain_ai_code?.includes("Kurang") || answers.ability_explain_ai_code?.includes("Tidak")) {
+  if (Number(answers.crit_10) < 3 || Number(answers.crit_7) >= 3) {
     recommendations.push(
-      "Uji Diri dengan Metode Feynman: Setiap kali menerima penjelasan atau sintaks dari AI, cobalah jelaskan kembali alur logika kode tersebut dengan kata-kata sendiri tanpa melihat layar."
+      "Simulasi Uji Responsi: Setelah menerima kode dari AI, cobalah jelaskan alur logika program tersebut kepada diri sendiri secara lisan dalam 2-3 kalimat sebelum mengumpulkannya."
     );
   }
 
   recommendations.push(
-    "Verifikasi Halusinasi: Biasakan memeriksa keberadaan fungsi atau library yang disarankan AI di dokumentasi resmi bahasa pemrograman untuk memastikan akurasi dan 'best practices'."
+    "Verifikasi Halusinasi & Dokumentasi: Selalu uji silang library atau sintaks yang disarankan AI ke dokumentasi resmi bahasa pemrograman untuk memastikan kaidah yang digunakan mutakhir dan valid."
   );
 
   return recommendations;
@@ -250,38 +275,40 @@ function generateRecommendations(score: number, answers: SurveySubmissionPayload
  * Calculates 3 key card metrics for the personality collector card.
  */
 export function calculateCardMetrics(score: number, answers: Record<string, any>): CardMetrics {
-  const firstAction = typeof answers.coding_first_action === "string" ? answers.coding_first_action : "";
-  const dep7 = Number(answers.dep_7) || 2;
-  const dep8 = Number(answers.dep_8) || 2;
+  const seq = typeof answers.problem_solving_sequence === "string" ? answers.problem_solving_sequence : "";
+  const crit1 = Number(answers.crit_1) || 2;
+  const crit2 = Number(answers.crit_2) || 2;
+  const crit5 = Number(answers.crit_5) || 2;
 
-  // Debugging autonomy calculation
-  let debugScore = 60;
-  if (firstAction.includes("Membaca pesan error")) debugScore = 90;
-  else if (firstAction.includes("Mencari di mesin pencari")) debugScore = 80;
-  else if (firstAction.includes("Bertanya kepada teman")) debugScore = 70;
-  else if (firstAction.includes("Langsung copy-paste")) debugScore = 35;
+  // Autonomy calculation
+  let baseAutonomy = 60;
+  if (seq.includes("Jarang pakai AI")) baseAutonomy = 95;
+  else if (seq.includes("Tanya AI dulu untuk gambaran awal, baru cek ulang")) baseAutonomy = 80;
+  else if (seq.includes("Buka AI dan sumber terpercaya bersamaan")) baseAutonomy = 70;
+  else if (seq.includes("Langsung tanya AI sebagai langkah pertama")) baseAutonomy = 35;
 
-  debugScore = Math.min(98, Math.max(25, Math.round((debugScore + (dep7 - 1) * 10 + (dep8 - 1) * 5) / 1.15)));
+  const autonomyScore = Math.min(
+    98,
+    Math.max(25, Math.round((baseAutonomy + (crit1 - 1) * 8 + (crit2 - 1) * 8 + (crit5 - 1) * 6) / 1.25))
+  );
 
   // Critical verification calculation
-  const crit4 = Number(answers.crit_4) || 2;
-  const crit5 = Number(answers.crit_5) || 2;
-  const crit6 = Number(answers.crit_6) || 2;
-  const testCode = typeof answers.test_ai_code_before_use === "string" ? answers.test_ai_code_before_use : "";
+  const journalEval = evaluateJournalDetection(answers);
+  const journalScore = journalEval.scorePercentage; // 0 to 100
 
-  let testScore = 60;
-  if (testCode.includes("Selalu diuji")) testScore = 90;
-  else if (testCode.includes("Diuji sekilas")) testScore = 65;
-  else if (testCode.includes("Hanya dipastikan tidak syntax")) testScore = 45;
-  else if (testCode.includes("Kadang langsung dikirim")) testScore = 30;
+  const crit3 = Number(answers.crit_3) || 2;
+  const crit7 = Number(answers.crit_7) || 2; // reversed
+  const crit8 = Number(answers.crit_8) || 2;
+  const crit10 = Number(answers.crit_10) || 2;
 
-  const critNorm = ((crit4 + crit5 + crit6 - 3) / 9) * 100;
-  const verificationScore = Math.min(98, Math.max(20, Math.round(testScore * 0.4 + critNorm * 0.6)));
+  const critNorm = ((crit3 + (5 - crit7) + crit8 + crit10 - 4) / 12) * 100;
+  const verificationScore = Math.min(98, Math.max(20, Math.round(journalScore * 0.45 + critNorm * 0.55)));
 
   return {
-    debuggingAutonomy: debugScore,
+    debuggingAutonomy: autonomyScore,
     criticalVerification: verificationScore,
     dependencyScore: score,
+    journalDetectionScore: journalEval.correctCount,
   };
 }
 
@@ -293,15 +320,15 @@ export function getPersonalizedSolutions(
   score: number
 ): PersonalizedSolution[] {
   const solutions: PersonalizedSolution[] = [];
-  const firstAction = typeof answers.coding_first_action === "string" ? answers.coding_first_action : "";
+  const seq = typeof answers.problem_solving_sequence === "string" ? answers.problem_solving_sequence : "";
   const triggers: string[] = Array.isArray(answers.usage_triggers) ? answers.usage_triggers : [];
-  const ununderstood = typeof answers.use_ununderstood_code === "string" ? answers.use_ununderstood_code : "";
-  const abilityExplain = typeof answers.ability_explain_ai_code === "string" ? answers.ability_explain_ai_code : "";
-  const genFreq = typeof answers.code_generation_frequency === "string" ? answers.code_generation_frequency : "";
-  const hallu = typeof answers.learn_encountered_hallucination === "string" ? answers.learn_encountered_hallucination : "";
+  const crit7 = Number(answers.crit_7) || 2;
+  const crit9 = Number(answers.crit_9) || 2;
+  const crit10 = Number(answers.crit_10) || 2;
+  const learnPractice = typeof answers.learn_practice_frequency === "string" ? answers.learn_practice_frequency : "";
 
   // 1. Terminal Error habit
-  if (firstAction.includes("Langsung copy-paste")) {
+  if (seq.includes("Langsung tanya AI sebagai langkah pertama")) {
     solutions.push({
       id: "terminal_rule",
       title: "Aturan 2 Menit Error Terminal",
@@ -312,7 +339,7 @@ export function getPersonalizedSolutions(
   }
 
   // 2. Deadline rush
-  if (triggers.some((t) => t.includes("Tenggat waktu") || t.includes("deadline"))) {
+  if (triggers.some((t) => t.includes("deadline") || t.includes("tenggat"))) {
     solutions.push({
       id: "deadline_timebox",
       title: "Timeboxing 30/10 Praktikum",
@@ -322,24 +349,19 @@ export function getPersonalizedSolutions(
     });
   }
 
-  // 3. Responsi risk (code not fully understood)
-  if (
-    ununderstood.includes("Sering") ||
-    ununderstood.includes("beberapa kali") ||
-    abilityExplain.includes("Kurang") ||
-    abilityExplain.includes("Tidak")
-  ) {
+  // 3. Responsi readiness / logic gap
+  if (crit9 >= 3 || crit10 < 3) {
     solutions.push({
       id: "feynman_check",
-      title: "Uji Feynman 1 Paragraf",
+      title: "Uji Pemahaman Feynman 1 Paragraf",
       iconName: "shield",
       advice:
-        "Sebelum submit tugas praktikum, coba jelaskan alur logika kode tersebut ke diri sendiri dalam 2 kalimat santai agar kamu siap dan percaya diri saat sesi responsi tatap muka.",
+        "Sebelum submit tugas praktikum, coba jelaskan alur logika program tersebut ke diri sendiri dalam 2 kalimat santai agar kamu percaya diri saat sesi responsi tatap muka dengan dosen/asprak.",
     });
   }
 
-  // 4. Hallucination check
-  if ((hallu.includes("Hampir tidak pernah") || hallu.includes("Jarang")) && score > 35) {
+  // 4. Blind trust / Documentation verification
+  if (crit7 >= 3) {
     solutions.push({
       id: "docs_check",
       title: "Uji Silang Dokumentasi Resmi",
@@ -349,25 +371,25 @@ export function getPersonalizedSolutions(
     });
   }
 
-  // 5. Heavy code generation
-  if (genFreq.includes("Sangat sering") || score > 60) {
+  // 5. Practice frequency
+  if (learnPractice === "Jarang" || learnPractice === "Tidak Pernah") {
     solutions.push({
       id: "sandbox_session",
       title: "Sesi 'Offline Sandbox' Mingguan",
       iconName: "code",
       advice:
-        "Sisihkan 1 jam per minggu untuk mengerjakan satu soal algoritma murni dengan editor teks dan compiler terminal tanpa bantuan AI sama sekali untuk menjaga kemandirian berpikir.",
+        "Sisihkan 1 jam per minggu untuk mencoba mengerjakan satu soal algoritma murni di editor teks tanpa bantuan AI sama sekali untuk memelihara ketajaman nalar komputasi Anda.",
     });
   }
 
-  // 6. Socratic prompt fallback
+  // Fallback: Socratic prompt
   if (solutions.length < 2) {
     solutions.push({
       id: "socratic_prompting",
       title: "Jadikan AI Mentor, Bukan Joki",
       iconName: "compass",
       advice:
-        "Ubah cara bertanya ke AI dari 'Buatkan kode untuk...' menjadi 'Berikan saya petunjuk konsep atau pertanyaan pemantik tanpa memberikan kode lengkap' agar pemahamanmu terus berkembang.",
+        "Ubah cara bertanya ke AI dari 'Buatkan solusi untuk...' menjadi 'Berikan saya petunjuk konsep atau pertanyaan pemantik tanpa memberikan kode lengkap' agar nalar Anda terus terasah.",
     });
   }
 
@@ -380,37 +402,32 @@ export function getPersonalizedSolutions(
 export function determineArchetype(score: number, answers: Record<string, any>): ArchetypeProfile {
   const metrics = calculateCardMetrics(score, answers);
   const triggers: string[] = Array.isArray(answers.usage_triggers) ? answers.usage_triggers : [];
-  const firstAction = typeof answers.coding_first_action === "string" ? answers.coding_first_action : "";
-  const ununderstood = typeof answers.use_ununderstood_code === "string" ? answers.use_ununderstood_code : "";
-  const codeExplain = typeof answers.code_explanation_frequency === "string" ? answers.code_explanation_frequency : "";
-  const abilityExplain = typeof answers.ability_explain_ai_code === "string" ? answers.ability_explain_ai_code : "";
-  const testCode = typeof answers.test_ai_code_before_use === "string" ? answers.test_ai_code_before_use : "";
-  const genFreq = typeof answers.code_generation_frequency === "string" ? answers.code_generation_frequency : "";
-  const crit4 = Number(answers.crit_4) || 2;
-  const crit5 = Number(answers.crit_5) || 2;
-  const crit6 = Number(answers.crit_6) || 2;
-  const learnComp = Number(answers.learn_prioritize_completion) || 2;
-  const hallu = typeof answers.learn_encountered_hallucination === "string" ? answers.learn_encountered_hallucination : "";
+  const seq = typeof answers.problem_solving_sequence === "string" ? answers.problem_solving_sequence : "";
+  const crit1 = Number(answers.crit_1) || 2;
+  const crit2 = Number(answers.crit_2) || 2;
+  const crit7 = Number(answers.crit_7) || 2;
+  const crit8 = Number(answers.crit_8) || 2;
+  const crit10 = Number(answers.crit_10) || 2;
+  const learn6 = Number(answers.learn_6) || 2;
+  const learn8 = Number(answers.learn_8) || 2;
+  const weekly = typeof answers.weekly_ai_duration === "string" ? answers.weekly_ai_duration : "";
+  const journalCorrect = metrics.journalDetectionScore ?? 3;
 
-  // 1. The Skeptical Auditor
-  if (
-    (crit4 >= 3 || crit5 >= 3 || crit6 >= 3) &&
-    (testCode.includes("Selalu diuji") || hallu.includes("Sangat sering") || hallu.includes("Cukup sering")) &&
-    score <= 66.67
-  ) {
+  // 1. The Skeptical Auditor (High Verification & Good Journal Detection)
+  if ((crit8 >= 3 || journalCorrect >= 4) && crit7 <= 2 && score <= 66.67) {
     return {
       id: "skeptical_auditor",
       name: "THE SKEPTICAL AUDITOR",
       subtitle: "Sang Kurator Kritis",
       editionNo: "EDITION #01/06",
       insigniaType: "prism",
-      tagline: "Kritis, teliti, dan nggak gampang percaya sama kode buatan AI.",
+      tagline: "Kritis, teliti, dan tidak mudah terbuai oleh keluaran AI.",
       description:
-        "Kamu selalu berhati-hati sama output AI. Kamu sadar AI sering ngaco atau halusinasi, jadi kamu selalu tes kode dan kroscek dokumentasi resmi sebelum dipakai ke tugas praktikum.",
+        "Anda selalu bersikap waspada terhadap output AI. Anda menyadari potensi halusinasi dan fabrikasi data AI, sehingga selalu melakukan uji silang dan pengujian mandiri sebelum menerapkan solusi dalam tugas.",
       characteristics: [
-        "Rajin kroscek ke dokumentasi resmi",
-        "Peka kalau ada kode aneh atau halusinasi",
-        "Selalu tes edge-case sebelum yakin kode aman",
+        "Cermat memeriksa keabsahan sitasi dan dokumentasi",
+        "Peka terhadap anomali logika atau kode fiktif",
+        "Mengutamakan verifikasi fakta di atas kepraktisan instan",
       ],
       metrics,
       badgeTheme: {
@@ -422,11 +439,10 @@ export function determineArchetype(score: number, answers: Record<string, any>):
     };
   }
 
-  // 2. The Socratic Co-Pilot
+  // 2. The Socratic Co-Pilot (High Autonomy & Conceptual Partner)
   if (
-    (codeExplain.includes("Sangat sering") || codeExplain.includes("Sering")) &&
-    (abilityExplain.includes("Sangat mampu") || abilityExplain.includes("Cukup mampu")) &&
-    (firstAction.includes("Membaca pesan error") || firstAction.includes("Mencari di mesin pencari")) &&
+    crit10 >= 3 &&
+    (seq.includes("Tanya AI dulu untuk gambaran awal") || seq.includes("Buka AI dan sumber terpercaya bersamaan")) &&
     score <= 66.67
   ) {
     return {
@@ -435,13 +451,13 @@ export function determineArchetype(score: number, answers: Record<string, any>):
       subtitle: "Sang Mitra Dialektika",
       editionNo: "EDITION #02/06",
       insigniaType: "dialectic",
-      tagline: "Pakai AI buat diskusi dan paham konsep, bukan buat joki tugas.",
+      tagline: "Menjadikan AI rekan diskusi konseptual, bukan pengganti proses berpikir.",
       description:
-        "Pola belajar kamu keren dan sehat! Kamu pakai AI kayak teman diskusi buat nanya 'kenapa' dan cari cara lain buat mecahin masalah. Logika kodingnya tetap kamu sendiri yang pegang.",
+        "Pola belajar Anda sangat sehat dan konstruktif! Anda menggunakan AI layaknya teman bertukar pikiran untuk memperdalam konsep, namun kendali logika dan pemahaman tetap Anda kuasai secara mandiri.",
       characteristics: [
-        "Fokus ke pemahaman alur, bukan asal kode jalan",
-        "Coba cari error sendiri dulu sebelum nanya AI",
-        "Pede dan siap pas ditanya alur kode waktu responsi",
+        "Fokus memahami alur, bukan sekadar menyalin jawaban",
+        "Mampu menjelaskan kembali logika program saat responsi",
+        "Menggunakan prompt penuntun untuk memperdalam wawasan",
       ],
       metrics,
       badgeTheme: {
@@ -453,10 +469,10 @@ export function determineArchetype(score: number, answers: Record<string, any>):
     };
   }
 
-  // 3. The Deadline Sprinter
+  // 3. The Deadline Sprinter (Triggered by Deadlines)
   if (
-    triggers.some((t) => t.includes("Tenggat waktu") || t.includes("deadline")) &&
-    (ununderstood.includes("Sering") || ununderstood.includes("beberapa kali") || learnComp >= 3 || score > 45)
+    triggers.some((t) => t.includes("deadline") || t.includes("tenggat")) &&
+    (learn6 >= 3 || learn8 >= 3 || score > 45)
   ) {
     return {
       id: "deadline_sprinter",
@@ -464,13 +480,13 @@ export function determineArchetype(score: number, answers: Record<string, any>):
       subtitle: "Sang Pelari Tenggat Waktu",
       editionNo: "EDITION #03/06",
       insigniaType: "pulse",
-      tagline: "Bisa mandiri di waktu santai, tapi suka terpaksa kompromi pas deadline mepet.",
+      tagline: "Mandiri saat luang, namun berkompromi saat tenggat waktu mengepung.",
       description:
-        "Sebenarnya kamu punya kemampuan mikir mandiri yang bagus. Tapi kalau tugas praktikum lagi numpuk dan deadline tinggal hitungan jam, godaan buat langsung copy-paste jawaban AI jadi susah ditolak.",
+        "Sebenarnya Anda memiliki daya nalar mandiri yang baik. Namun saat tugas menumpuk dan tenggat waktu praktikum kian dekat, godaan untuk mengandalkan jalan pintas AI menjadi sulit dihindari.",
       characteristics: [
-        "Mampu bernalar mandiri kalau beban tugas wajar",
-        "Kadang terpaksa ambil jalan pintas pas kepepet waktu",
-        "Bakal makin jago kalau waktu pengerjaan diatur lebih awal",
+        "Mampu bernalar mandiri saat beban tugas moderat",
+        "Rentan mengorbankan pemahaman demi kecepatan selesai tugas",
+        "Sangat terbantu jika memulai pengerjaan tugas lebih awal",
       ],
       metrics,
       badgeTheme: {
@@ -482,10 +498,10 @@ export function determineArchetype(score: number, answers: Record<string, any>):
     };
   }
 
-  // 4. The Autopilot Builder
+  // 4. The Autopilot Builder (High Dependency)
   if (
     score > 66.67 ||
-    (genFreq.includes("Sangat sering") && firstAction.includes("Langsung copy-paste"))
+    (seq.includes("Langsung tanya AI sebagai langkah pertama") && Number(answers.dep_5) >= 3)
   ) {
     return {
       id: "autopilot_builder",
@@ -493,13 +509,13 @@ export function determineArchetype(score: number, answers: Record<string, any>):
       subtitle: "Sang Arsitek Otomatis",
       editionNo: "EDITION #04/06",
       insigniaType: "automaton",
-      tagline: "Tugas kelar super cepat, tapi hati-hati insting koding dasar bisa tumpul.",
+      tagline: "Penyelesaian tugas secepat kilat, namun fondasi dasar perlu dijaga.",
       description:
-        "Tugas kamu selesai kilat karena porsi ngetik kodenya banyak dibantu AI. Tapi hati-hati, kalau keseringan bergantung, kamu bisa kagok pas harus nulis kode dari nol di ujian luring tanpa internet.",
+        "Tugas kuliah Anda terselesaikan dengan sangat cepat berkat bantuan otomatisasi AI. Namun waspadalah, ketergantungan yang tinggi berisiko menumpulkan intuisi algoritma saat menghadapi ujian tanpa internet.",
       characteristics: [
-        "Sering minta kode lengkap dari awal sampai akhir",
-        "Refleks pertama pas error langsung lempar ke AI",
-        "Perlu mulai luangkan waktu buat koding manual tanpa AI",
+        "Kerap meminta solusi lengkap tanpa menyusun kerangka mandiri",
+        "Refleks pertama saat menjumpai kendala adalah bertanya ke AI",
+        "Perlu mulai menyisihkan waktu untuk coding mandiri tanpa AI",
       ],
       metrics,
       badgeTheme: {
@@ -511,21 +527,21 @@ export function determineArchetype(score: number, answers: Record<string, any>):
     };
   }
 
-  // 5. The Digital Artisan
-  if (score <= 33.33 || genFreq.includes("Tidak pernah") || genFreq.includes("Jarang")) {
+  // 5. The Digital Artisan (Low AI Use, High Pure Craftsmanship)
+  if (score <= 33.33 || weekly.includes("Jarang") || (crit1 >= 3 && crit2 >= 3)) {
     return {
       id: "digital_artisan",
       name: "THE DIGITAL ARTISAN",
       subtitle: "Sang Pengrajin Logika",
       editionNo: "EDITION #05/06",
       insigniaType: "terminal",
-      tagline: "Setia sama kemurnian logika sendiri dan dokumentasi resmi.",
+      tagline: "Setia pada kemurnian nalar mandiri dan eksplorasi dokumentasi resmi.",
       description:
-        "Kamu lebih suka mikir sendiri dari nol, coret-coret logika di kertas, dan baca manual resmi daripada disuapin sama generator kode. Kemandirian dan fokus kamu patut diacungi jempol!",
+        "Anda lebih menikmati proses memecahkan masalah dari nol, mencoret-coret logika, dan menelaah dokumentasi resmi secara langsung. Kemandirian dan ketangguhan nalar Anda patut diapresiasi!",
       characteristics: [
-        "Fokus dan logika problem-solving sangat terlatih",
-        "Tenang dan siap menghadapi ujian tanpa internet",
-        "Bisa mulai coba AI buat otomatisasi hal repetitif",
+        "Daya analisis problem-solving sangat terlatih",
+        "Percaya diri menghadapi ujian luring tanpa alat bantu",
+        "Dapat mulai menjajaki AI untuk otomatisasi tugas repetitif",
       ],
       metrics,
       badgeTheme: {
@@ -537,20 +553,20 @@ export function determineArchetype(score: number, answers: Record<string, any>):
     };
   }
 
-  // Fallback: The Pragmatic Optimizer
+  // 6. Fallback: The Pragmatic Optimizer
   return {
     id: "pragmatic_optimizer",
     name: "THE PRAGMATIC OPTIMIZER",
     subtitle: "Sang Praktisi Seimbang",
     editionNo: "EDITION #06/06",
     insigniaType: "compass",
-    tagline: "Pakai AI secukupnya biar efisien, tapi pemahaman tetap dijaga.",
+    tagline: "Memanfaatkan AI secara proporsional demi efisiensi tanpa kehilangan esensi.",
     description:
-      "Kamu pakai AI secara proporsional: buat ngetik hal repetitif atau cari petunjuk pas lagi mentok, tapi jalan ceritanya tetap kamu yang pegang dan pahami.",
+      "Anda memanfaatkan teknologi AI secara terukur: mempercepat tugas mekanis saat menemui jalan buntu, namun tetap menjaga alur pemikiran dan tanggung jawab atas pekerjaan yang dihasilkan.",
     characteristics: [
-      "Tahu kapan harus nanya AI dan kapan mikir sendiri",
-      "Efisien ngerjain tugas tanpa kehilangan pemahaman",
-      "Tinggal perkuat kebiasaan cek docs resmi",
+      "Keseimbangan yang baik antara efisiensi dan pemahaman",
+      "Menggunakan AI sebagai akselerator kerja",
+      "Menjaga integritas dan akuntabilitas hasil kerja sendiri",
     ],
     metrics,
     badgeTheme: {
@@ -563,214 +579,20 @@ export function determineArchetype(score: number, answers: Record<string, any>):
 }
 
 /**
- * Extracts specific strengths (superpowers) and vulnerable spots (blind spots).
- */
-export function evaluateStrengthsAndBlindSpots(
-  answers: Record<string, any>,
-  score: number
-): { superpowers: SuperpowerInsight[]; blindspots: BlindSpotInsight[] } {
-  const superpowers: SuperpowerInsight[] = [];
-  const blindspots: BlindSpotInsight[] = [];
-
-  const firstAction = typeof answers.coding_first_action === "string" ? answers.coding_first_action : "";
-  const abilityExplain = typeof answers.ability_explain_ai_code === "string" ? answers.ability_explain_ai_code : "";
-  const testCode = typeof answers.test_ai_code_before_use === "string" ? answers.test_ai_code_before_use : "";
-  const ununderstood = typeof answers.use_ununderstood_code === "string" ? answers.use_ununderstood_code : "";
-  const learnComp = Number(answers.learn_prioritize_completion) || 2;
-  const learnUnder = Number(answers.learn_attempt_understand) || 3;
-  const hallu = typeof answers.learn_encountered_hallucination === "string" ? answers.learn_encountered_hallucination : "";
-  const crit1 = Number(answers.crit_1) || 2;
-  const crit2 = Number(answers.crit_2) || 2;
-  const crit3 = Number(answers.crit_3) || 2;
-  const crit4 = Number(answers.crit_4) || 2;
-  const crit6 = Number(answers.crit_6) || 2;
-  const dep1 = Number(answers.dep_1) || 2;
-  const dep2 = Number(answers.dep_2) || 2;
-  const dep7 = Number(answers.dep_7) || 2;
-  const dep8 = Number(answers.dep_8) || 2;
-
-  // --- SUPERPOWERS EVALUATION ---
-  // 1. Stack Trace Diagnosis
-  if (firstAction.includes("Membaca pesan error") || firstAction.includes("Mencari di mesin pencari")) {
-    superpowers.push({
-      id: "stack_trace_discipline",
-      title: "Jago Baca Error Sendiri",
-      tag: "Debugging Mandiri",
-      description:
-        "Pas kodingan error, kamu baca log dan pesan error-nya dulu sebelum buru-buru nanya AI. Kebiasaan ini bikin insting debugging kamu tetap terasah!",
-    });
-  }
-
-  // 2. Full Code Ownership
-  if (abilityExplain.includes("Sangat mampu") || crit6 >= 3) {
-    superpowers.push({
-      id: "code_ownership",
-      title: "Paham Alur Kode 100%",
-      tag: "Penguasaan Materi",
-      description:
-        "Kamu selalu mastiin ngerti jalan cerita kode yang kamu kumpulin. Jadi kalau pas responsi praktikum ditanya dosen atau aslab, kamu siap jawab dengan lancar.",
-    });
-  }
-
-  // 3. Rigorous Edge-Case Testing
-  if (testCode.includes("Selalu diuji")) {
-    superpowers.push({
-      id: "rigorous_testing",
-      title: "Nggak Asal Percaya (Rajin Ngetes)",
-      tag: "Testing Disiplin",
-      description:
-        "Kamu nggak langsung puas pas kode kelihatan jalan sekali. Kamu tes lagi pakai berbagai kemungkinan input buat mastiin hasilnya beneran valid.",
-    });
-  }
-
-  // 4. Critical Skepticism & Fact-Checking
-  if (crit4 >= 3 || crit3 >= 3 || hallu.includes("Sangat sering") || hallu.includes("Cukup sering")) {
-    superpowers.push({
-      id: "epistemic_vigilance",
-      title: "Peka sama Halusinasi AI",
-      tag: "Filter Kritis",
-      description:
-        "Mata kamu jeli ngeliat kalau AI mulai ngasih jawaban ngaco atau fungsi fiktif, dan kamu rajin kroscek ke dokumentasi asli.",
-    });
-  }
-
-  // 5. Mental Resilience & First Principles
-  if (crit1 >= 3 || crit2 >= 3 || dep7 >= 3 || dep8 >= 3) {
-    superpowers.push({
-      id: "mental_resilience",
-      title: "Percaya Diri Mikir Mandiri",
-      tag: "Nalar Mandiri",
-      description:
-        "Kamu punya keyakinan tinggi sama kemampuan logika kamu sendiri tanpa harus bergantung terus-menerus ke AI.",
-    });
-  }
-
-  // Fallback superpower if needed
-  if (superpowers.length < 2) {
-    if (learnUnder >= 3) {
-      superpowers.push({
-        id: "learning_drive",
-        title: "Niat Paham Konsep",
-        tag: "Fokus Belajar",
-        description:
-          "Kamu mengutamakan pemahaman materi kuliah, bukan sekadar 'yang penting tugas kumpul'.",
-      });
-    } else {
-      superpowers.push({
-        id: "tech_adaptability",
-        title: "Cepat Adaptasi Tools",
-        tag: "Adaptif",
-        description:
-          "Kamu pintar memanfaatkan tools modern buat mendukung alur kerja kuliah kamu.",
-      });
-    }
-  }
-
-  // --- BLIND SPOTS EVALUATION ---
-  // 1. Responsi & Live-Coding Vulnerability
-  if (
-    ununderstood.includes("Sering") ||
-    ununderstood.includes("beberapa kali") ||
-    abilityExplain.includes("Kurang") ||
-    abilityExplain.includes("Tidak")
-  ) {
-    blindspots.push({
-      id: "ununderstood_code_risk",
-      title: "Risiko Pas Responsi / Ujian Offline",
-      tag: "Waspada Responsi",
-      riskDescription:
-        "Pernah ngumpulin kode AI tanpa paham alurnya bisa jadi boomerang kalau tiba-tiba ditanya aslab atau pas ujian koding tatap muka.",
-      microAction:
-        "Coba jelaskan alur fungsi itu ke diri sendiri dengan bahasa santai selama 2 menit sebelum tugas dikumpul.",
-    });
-  }
-
-  // 2. Debugger Atrophy from Instant Copy-Paste
-  if (firstAction.includes("Langsung copy-paste")) {
-    blindspots.push({
-      id: "debugger_atrophy",
-      title: "Refleks Langsung Lempar Error",
-      tag: "Insting Debugging",
-      riskDescription:
-        "Kebiasaan langsung copy-paste error ke AI bisa bikin mata kamu kurang terbiasa baca nomor baris dan tipe exception di terminal.",
-      microAction:
-        "Tahan diri 2 menit: baca baris error-nya dan tebak penyebabnya sendiri dulu sebelum buka AI.",
-    });
-  }
-
-  // 3. Completion Trap (Speed over Depth)
-  if (learnComp >= 3) {
-    blindspots.push({
-      id: "completion_bias",
-      title: "Jebakan 'Yang Penting Beres'",
-      tag: "Ilusi Produktif",
-      riskDescription:
-        "Fokus ke tugas cepat kelar kadang bikin kita ngerasa udah paham materinya, padahal baru AI-nya yang paham.",
-      microAction:
-        "Setelah tugas selesai, tulis 1-2 baris catatan kecil tentang konsep baru apa yang baru aja kamu pelajari.",
-    });
-  }
-
-  // 4. Over-Trust & Hallucination Blindness
-  if ((hallu.includes("Hampir tidak pernah") || hallu.includes("Jarang")) && score > 35) {
-    blindspots.push({
-      id: "overtrust_risk",
-      title: "Terlalu Percaya Output AI",
-      tag: "Cek Validasi",
-      riskDescription:
-        "Jarang nemu kesalahan AI bisa jadi tanda kamu kurang teliti ngecek efisiensi atau kebenaran logika di balik kodenya.",
-      microAction:
-        "Kroscek library atau fungsi bawaan yang disarankan AI ke dokumentasi resmi bahasanya.",
-    });
-  }
-
-  // 5. Blank-Mind Anxiety (Panic without AI)
-  if (dep1 >= 3 || dep2 >= 3) {
-    blindspots.push({
-      id: "blank_mind_anxiety",
-      title: "Gugup Kalau Nggak Ada AI",
-      tag: "Kemandirian Mental",
-      riskDescription:
-        "Kebiasaan selalu buka AI dari awal bisa bikin panik atau 'blank' pas ngeliat editor kosong di ujian tanpa internet.",
-      microAction:
-        "Coret-coret alur logika atau pseudocode di kertas selama 5 menit dulu sebelum mulai ngoding.",
-    });
-  }
-
-  // Fallback blindspot if needed
-  if (blindspots.length < 2) {
-    blindspots.push({
-      id: "dependency_drift",
-      title: "Ketergantungan yang Merayap",
-      tag: "Pengingat Diri",
-      riskDescription:
-        "Kemudahan instan dari AI bisa perlahan-lahan bikin kita malas baca dokumentasi panjang.",
-      microAction:
-        "Luangkan satu sesi dalam seminggu buat ngoding murni tanpa buka tools AI sama sekali.",
-    });
-  }
-
-  return {
-    superpowers: superpowers.slice(0, 2),
-    blindspots: blindspots.slice(0, 2),
-  };
-}
-
-/**
- * Pure calculation function for the Primary Dependency Index.
+ * Calculates the complete dependency score and comprehensive results.
  */
 export function calculateDependencyScore(answers: SurveySubmissionPayload): ScoringResult {
   const itemDetails: ItemScoreDetail[] = [];
-  let totalNormalized = 0;
+  let totalEffectiveScore = 0;
 
   for (const item of DEPENDENCY_STATEMENTS) {
-    const rawVal = answers[item.id as keyof SurveySubmissionPayload] as number | undefined;
-
-    if (rawVal === undefined || rawVal === null) {
-      throw new Error(`Missing answer for required dependency statement: ${item.id}`);
+    const rawVal = Number(answers[item.id as keyof SurveySubmissionPayload]);
+    if (isNaN(rawVal) || rawVal < 1 || rawVal > 4) {
+      throw new Error(`Data kuesioner tidak lengkap: nilai '${item.id}' tidak valid atau belum diisi.`);
     }
 
     const { effectiveScore, normalized } = normalizeLikertScore(rawVal, item.isReversed);
+    totalEffectiveScore += effectiveScore;
 
     itemDetails.push({
       id: item.id,
@@ -780,34 +602,33 @@ export function calculateDependencyScore(answers: SurveySubmissionPayload): Scor
       effectiveScore,
       normalizedScore: Math.round(normalized * 100) / 100,
     });
-
-    totalNormalized += normalized;
   }
 
-  const rawMean = totalNormalized / DEPENDENCY_STATEMENTS.length;
-  // Round to 2 decimal places
-  const score = Math.round(rawMean * 100) / 100;
+  // 5 items, effective score range: 5 to 20
+  // Normalized score (0 to 100): ((total - 5) / (20 - 5)) * 100
+  const normalizedPrimaryScore = ((totalEffectiveScore - 5) / 15) * 100;
+  const roundedScore = Math.round(normalizedPrimaryScore * 100) / 100;
 
-  const { band, label, description } = getScoreCategory(score);
+  const { band, label: bandLabel, description: bandDescription } = getScoreCategory(roundedScore);
   const observations = generateObservations(answers);
-  const recommendations = generateRecommendations(score, answers);
-  const archetype = determineArchetype(score, answers);
-  const personalizedSolutions = getPersonalizedSolutions(answers, score);
-  const { superpowers, blindspots } = evaluateStrengthsAndBlindSpots(answers, score);
+  const recommendations = generateRecommendations(roundedScore, answers);
+
+  const archetype = determineArchetype(roundedScore, answers);
+  const personalizedSolutions = getPersonalizedSolutions(answers, roundedScore);
+  const journalDetectionAccuracy = evaluateJournalDetection(answers);
 
   return {
     scoringVersion: SCORING_VERSION,
-    score,
+    score: roundedScore,
     band,
-    bandLabel: label,
-    bandDescription: description,
+    bandLabel,
+    bandDescription,
     itemDetails,
     observations,
     recommendations,
+    calculatedAt: new Date().toISOString(),
     archetype,
     personalizedSolutions,
-    superpowers,
-    blindspots,
-    calculatedAt: new Date().toISOString(),
+    journalDetectionAccuracy,
   };
 }

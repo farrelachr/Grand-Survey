@@ -168,9 +168,15 @@ export function RespondentAnswersViewer({ answers }: RespondentAnswersViewerProp
                             {q.title}
                           </h4>
                           {q.description && (
-                            <p className="text-[11px] text-[#737A74] mt-0.5">
-                              {q.description}
-                            </p>
+                            q.id.startsWith("journal_case_") ? (
+                              <div className="mt-1.5 p-2.5 bg-[#F7F7F2] border border-[#E1E5DF] rounded text-[11px] font-mono text-[#202522]">
+                                {q.description}
+                              </div>
+                            ) : (
+                              <p className="text-[11px] text-[#737A74] mt-0.5">
+                                {q.description}
+                              </p>
+                            )
                           )}
                         </div>
 

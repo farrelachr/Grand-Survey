@@ -12,74 +12,82 @@ export const SPREADSHEET_HEADERS = [
   "Submission ID",
   "Submitted At",
   "Survey Version",
+  // Section 1: Profil
   "Nama Lengkap",
-  "Cohort",
-  "CS Interest",
-  "AI Usage Frequency",
-  "AI Tools Used",
-  "Primary AI Tool",
-  "Weekly AI Frequency",
-  "Academic Activities",
-  "Usage Triggers",
-  "Session Duration",
-  "AI vs Traditional",
-  // Section 3 Likert Statements
-  "Dep 1 (Sulit tanpa AI)",
-  "Dep 2 (Langsung ke AI sebelum coba sendiri)",
-  "Dep 3 (Tugas jauh lebih berat tanpa AI)",
-  "Dep 4 (Pakai AI hampir di setiap tugas)",
-  "Dep 5 (Minta AI solusi lengkap)",
-  "Dep 6 (Mampu tanpa AI - R)",
-  "Dep 7 (Coba mandiri dulu - R)",
-  "Dep 8 (Alat bantu bukan pengganti - R)",
-  // Section 4 Coding
-  "Coding First Action",
-  "Code Generation Freq",
-  "Code Debugging Freq",
-  "Code Explanation Freq",
-  "Ability Explain AI Code",
-  "Use Ununderstood Code",
-  "Test AI Code Before Use",
-  // Section 5 Learning
-  "Learn Faster Concepts (1-4)",
-  "Learn Difficult Concepts (1-4)",
-  "Learn Alternative Approaches (1-4)",
-  "Learn Reduced Reliance Others (1-4)",
-  "Learn Prioritize Completion (1-4)",
-  "Learn Attempt Understand (1-4)",
-  "Learn Encountered Hallucination",
-  // Section 6 Independence & Critical
-  "Crit 1 (Yakin tanpa AI)",
-  "Crit 2 (Cari rujukan mandiri)",
-  "Crit 3 (Evaluasi kebenaran AI)",
-  "Crit 4 (Verifikasi sebelum pakai)",
-  "Crit 5 (Bandingkan sumber lain)",
-  "Crit 6 (Paham alur logika)",
-  "Crit 7 (Terlewat deep thinking)",
-  // Section 7 Perceptions
-  "Boundary Explain Material",
-  "Boundary Sample Code",
-  "Boundary Debugging",
-  "Boundary Entire Assignment",
-  "Boundary Ununderstood Answer",
-  "Boundary Threshold Dependency",
-  "Boundary Rules Needed",
-  // Section 8 Future
-  "Future Career Importance (1-4)",
-  "Future Proficiency Need (1-4)",
-  "Future Foundational CS (1-4)",
-  "Future Problem Solving (1-4)",
-  "Future Prevent Overdependence (1-4)",
-  "Future Top Skills",
-  "Future HIMALKOM Programs",
-  "Future Ideal Usage",
-  // Section 9 Open
-  "Open Biggest Challenge",
-  "Open Effective Learning Tips",
-  "Open HIMALKOM Initiative",
-  // Scoring
+  "NIM",
+  "Angkatan",
+  "Nomor WhatsApp",
+  "Email IPB",
+  // Section 2: Pola Penggunaan AI
+  "Platform AI Utama",
+  "Estimasi Durasi Mingguan",
+  "Ragam Aktivitas Akademik",
+  "Pemicu Penggunaan AI",
+  "Urutan Pencarian Solusi",
+  // Section 3: Ketergantungan terhadap AI (Likert 1-4)
+  "Dep 1 (Kesulitan tugas tanpa AI)",
+  "Dep 2 (AI sebelum coba sendiri)",
+  "Dep 3 (Pekerjaan lebih sulit tanpa AI)",
+  "Dep 4 (Hampir setiap tugas pakai AI)",
+  "Dep 5 (Minta solusi lengkap ke AI)",
+  // Section 4: Instrumen Penilaian & Deteksi AI (Case Journal)
+  "Kasus Jurnal 1 (Dirgahayu - Real)",
+  "Kasus Jurnal 2 (Kobayashi - Real)",
+  "Kasus Jurnal 3 (Tsuchiya - Real)",
+  "Kasus Jurnal 4 (Kusumawardhani - Fake)",
+  "Kasus Jurnal 5 (Watanabe - Fake)",
+  "Kasus Jurnal 6 (Nugroho - Fake)",
+  "Tingkat Keyakinan Jurnal",
+  "Alasan Analisis Jurnal",
+  // Section 5: Kemandirian, Verifikasi & Critical Thinking (Likert 1-4)
+  "Crit 1 (Coba sendiri dulu baru cek AI)",
+  "Crit 2 (Yakin selesaikan tanpa AI)",
+  "Crit 3 (Verifikasi dengan materi kuliah)",
+  "Crit 4 (Merasa kemampuan berpikir menurun)",
+  "Crit 5 (Batasi buka AI hanya saat buntu)",
+  "Crit 6 (AI sebagai alat bantu proses bukan hasil akhir)",
+  "Crit 7 (Langsung percaya tanpa cek dokumentasi)",
+  "Crit 8 (Mampu bedakan jawaban benar vs terlihat benar)",
+  "Crit 9 (Pernah kumpul tugas ada error fatal AI)",
+  "Crit 10 (Mampu jelaskan alur jawaban saat responsi)",
+  // Section 6: Dampak Belajar (Likert 1-4 & Frekuensi)
+  "Learn 1 (AI bantu paham materi sulit)",
+  "Learn 2 (Bantu konsep programming lewat contoh)",
+  "Learn 3 (Paham lewat contoh kehidupan nyata)",
+  "Learn 4 (Mengingat kembali materi)",
+  "Learn 5 (Paham hubungan antar konsep)",
+  "Learn 6 (Orientasi selesai tugas dibanding pemahaman)",
+  "Learn 7 (Cenderung lewatkan materi kuliah)",
+  "Learn 8 (Cepat selesai tugas tapi belum tentu paham)",
+  "Learn 9 (Mendorong eksplorasi topik lain)",
+  "Learn 10 (Frekuensi latihan mandiri setelah pakai AI)",
+  // Section 7: Persepsi & Batas
+  "Batas Jelaskan Materi",
+  "Batas Buat Contoh Kode",
+  "Batas Debugging",
+  "Batas Seluruh Tugas",
+  "Titik Kritis Ketergantungan",
+  // Section 8: Masa Depan Mahasiswa Ilkom
+  "Future 1 (Perubahan kebutuhan tenaga kerja)",
+  "Future 2 (Kompetensi manfaatkan AI)",
+  "Future 3 (Fondasi programming tetap perlu)",
+  "Future 4 (Problem solving kompetensi utama)",
+  "Future 5 (Terus tingkatkan kompetensi diri)",
+  "Kemampuan Paling Penting",
+  "Tantangan Utama",
+  "Program Kegiatan Dibutuhkan",
+  "Profil Lulusan Ideal",
+  // Section 9: Saran (Wajib)
+  "Saran Penggunaan Tugas/Praktikum",
+  "Saran Berpikir Mandiri",
+  "Saran Dosen & Lingkungan Akademik",
+  // Evaluasi & Skor
   "Dependency Score (0-100)",
   "Dependency Band",
+  "Archetype",
+  "Journal Detection Accuracy (0-6)",
+  "Debugging Autonomy Score",
+  "Critical Verification Score",
   "Scoring Version",
 ];
 
@@ -94,43 +102,34 @@ export function formatSubmissionRow(
     submissionId,
     submittedAt,
     surveyVersion,
+    // Section 1
     answers.respondent_name || "-",
-    answers.cohort_confirmation,
-    answers.cs_interest,
-    answers.ai_usage_frequency,
-    Array.isArray(answers.ai_tools_used) ? answers.ai_tools_used.join("; ") : "",
+    answers.nim || "-",
+    answers.cohort_confirmation ? `Angkatan ${answers.cohort_confirmation}` : "-",
+    answers.whatsapp_number || "-",
+    answers.ipb_email || "-",
+    // Section 2
     answers.primary_ai_tool,
-    answers.weekly_ai_frequency,
+    answers.weekly_ai_duration,
     Array.isArray(answers.academic_activities) ? answers.academic_activities.join("; ") : "",
     Array.isArray(answers.usage_triggers) ? answers.usage_triggers.join("; ") : "",
-    answers.session_duration,
-    answers.ai_vs_traditional,
-    // S3 Likert
+    answers.problem_solving_sequence,
+    // Section 3
     answers.dep_1,
     answers.dep_2,
     answers.dep_3,
     answers.dep_4,
     answers.dep_5,
-    answers.dep_6,
-    answers.dep_7,
-    answers.dep_8,
-    // S4 Coding
-    answers.coding_first_action,
-    answers.code_generation_frequency,
-    answers.code_debugging_frequency,
-    answers.code_explanation_frequency,
-    answers.ability_explain_ai_code,
-    answers.use_ununderstood_code,
-    answers.test_ai_code_before_use,
-    // S5 Learning
-    answers.learn_faster_concepts,
-    answers.learn_difficult_concepts,
-    answers.learn_alternative_approaches,
-    answers.learn_reduced_reliance_others,
-    answers.learn_prioritize_completion,
-    answers.learn_attempt_understand,
-    answers.learn_encountered_hallucination,
-    // S6 Critical
+    // Section 4
+    answers.journal_case_1,
+    answers.journal_case_2,
+    answers.journal_case_3,
+    answers.journal_case_4,
+    answers.journal_case_5,
+    answers.journal_case_6,
+    answers.journal_confidence,
+    answers.journal_reasoning || "",
+    // Section 5
     answers.crit_1,
     answers.crit_2,
     answers.crit_3,
@@ -138,40 +137,53 @@ export function formatSubmissionRow(
     answers.crit_5,
     answers.crit_6,
     answers.crit_7,
-    // S7 Boundaries
+    answers.crit_8,
+    answers.crit_9,
+    answers.crit_10,
+    // Section 6
+    answers.learn_1,
+    answers.learn_2,
+    answers.learn_3,
+    answers.learn_4,
+    answers.learn_5,
+    answers.learn_6,
+    answers.learn_7,
+    answers.learn_8,
+    answers.learn_9,
+    answers.learn_practice_frequency,
+    // Section 7
     answers.boundary_explain_material,
     answers.boundary_sample_code,
     answers.boundary_debugging,
     answers.boundary_entire_assignment,
-    answers.boundary_ununderstood_answer,
-    answers.boundary_threshold_dependency,
-    answers.boundary_rules_needed,
-    // S8 Future
-    answers.future_career_importance,
-    answers.future_proficiency_need,
-    answers.future_foundational_cs,
-    answers.future_problem_solving,
-    answers.future_prevent_overdependence,
-    Array.isArray(answers.future_top_skills) ? answers.future_top_skills.join("; ") : "",
-    Array.isArray(answers.future_himalkom_programs) ? answers.future_himalkom_programs.join("; ") : "",
-    answers.future_ideal_usage,
-    // S9 Open
-    answers.open_biggest_challenge || "",
-    answers.open_effective_learning_tips || "",
-    answers.open_himalkom_initiative || "",
+    answers.boundary_threshold_essay || "",
+    // Section 8
+    answers.future_labor_change,
+    answers.future_ai_competence,
+    answers.future_core_cs_needed,
+    answers.future_problem_solving_key,
+    answers.future_continuous_learning,
+    Array.isArray(answers.future_most_important_skill) ? answers.future_most_important_skill.join("; ") : "",
+    Array.isArray(answers.future_biggest_challenge) ? answers.future_biggest_challenge.join("; ") : "",
+    Array.isArray(answers.future_needed_programs) ? answers.future_needed_programs.join("; ") : "",
+    answers.future_ideal_graduate_profile || "",
+    // Section 9
+    answers.feedback_task_practical_usage || "",
+    answers.feedback_independent_thinking || "",
+    answers.feedback_lecturer_academic_response || "",
     // Scoring
     scoringResult.score,
     scoringResult.band,
+    scoringResult.archetype?.name || "-",
+    scoringResult.journalDetectionAccuracy?.correctCount ?? scoringResult.archetype?.metrics.journalDetectionScore ?? "-",
+    scoringResult.archetype?.metrics.debuggingAutonomy ?? "-",
+    scoringResult.archetype?.metrics.criticalVerification ?? "-",
     scoringResult.scoringVersion,
   ];
 }
 
 /**
- * Syncs a single survey submission into Google Sheets idempotently.
- */
-/**
  * Safely parses and normalizes Google Service Account Private Key from environment variables.
- * Handles escaped newlines (\n), real newlines, and surrounding quotes from UI inputs.
  */
 export function getGooglePrivateKey(): string | undefined {
   let key = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
@@ -188,6 +200,9 @@ export function getGooglePrivateKey(): string | undefined {
   return key.replace(/\\n/g, "\n").trim();
 }
 
+/**
+ * Syncs a single survey submission into Google Sheets idempotently.
+ */
 export async function syncSubmissionToGoogleSheets(
   submissionId: string,
   submittedAt: string,
@@ -314,7 +329,7 @@ export function generateSubmissionsCSV(
       sub.scoring_details || {
         score: sub.dependency_score,
         band: sub.dependency_category,
-        scoringVersion: "1.0.0",
+        scoringVersion: "2.0.0",
       }
     );
     rows.push(row.map(escapeCSV).join(","));

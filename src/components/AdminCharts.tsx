@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   BarChart,
   Bar,
@@ -13,6 +14,8 @@ import {
   Cell,
   Legend,
 } from "recharts";
+import { Copy, Check } from "lucide-react";
+import { copyChartAsImage } from "@/lib/chart-export";
 
 interface SubmissionSummary {
   score: number;
@@ -27,8 +30,10 @@ interface AdminChartsProps {
     dependency_score: number;
     dependency_category: "RENDAH" | "SEDANG" | "TINGGI";
     answers: {
-      cs_interest?: string;
+      cohort_confirmation?: string;
+      cohort?: string;
       primary_ai_tool?: string;
+      [key: string]: any;
     };
   }>;
 }
@@ -40,6 +45,34 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export function AdminCharts({ submissions }: AdminChartsProps) {
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [downloadedId, setDownloadedId] = useState<string | null>(null);
+
+  const handleCopyChart = async (containerId: string, title: string, categoryLabel: string) => {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    try {
+      const res = await copyChartAsImage({
+        containerElement: container,
+        title,
+        categoryLabel,
+        metaText: `Total Responden: ${submissions.length}`,
+        filename: containerId,
+      });
+
+      if (res === "copied") {
+        setCopiedId(containerId);
+        setTimeout(() => setCopiedId(null), 2500);
+      } else {
+        setDownloadedId(containerId);
+        setTimeout(() => setDownloadedId(null), 2500);
+      }
+    } catch (err) {
+      console.error("Gagal menyalin grafik:", err);
+    }
+  };
+
   if (!submissions || submissions.length === 0) {
     return (
       <div className="bg-[#FFFFFF] border border-[#E1E5DF] rounded p-8 text-center text-xs text-[#737A74]">
@@ -78,23 +111,25 @@ export function AdminCharts({ submissions }: AdminChartsProps) {
     }))
     .sort((a, b) => b.jumlah - a.jumlah);
 
-  // 3. Average Score by CS Interest
-  const interestScores: Record<string, { total: number; count: number }> = {};
+  // 3. Average Score by Cohort (Angkatan 60, 61, 62, 63)
+  const cohortScores: Record<string, { total: number; count: number }> = {};
   for (const s of submissions) {
-    const interest = s.answers?.cs_interest || "Belum Menentukan";
-    const shortInterest = interest.split("&")[0].trim().replace("Development", "Dev");
-    if (!interestScores[shortInterest]) {
-      interestScores[shortInterest] = { total: 0, count: 0 };
+    const rawCohort = s.answers?.cohort_confirmation || s.answers?.cohort || "Lainnya";
+    const cohortLabel = rawCohort.startsWith("Angkatan") ? rawCohort : `Angkatan ${rawCohort}`;
+    if (!cohortScores[cohortLabel]) {
+      cohortScores[cohortLabel] = { total: 0, count: 0 };
     }
-    interestScores[shortInterest].total += Number(s.dependency_score || 0);
-    interestScores[shortInterest].count += 1;
+    cohortScores[cohortLabel].total += Number(s.dependency_score || 0);
+    cohortScores[cohortLabel].count += 1;
   }
 
-  const interestChartData = Object.entries(interestScores).map(([name, data]) => ({
-    name,
-    rataRata: Math.round((data.total / data.count) * 10) / 10,
-    responden: data.count,
-  }));
+  const cohortChartData = Object.entries(cohortScores)
+    .map(([name, data]) => ({
+      name,
+      rataRata: Math.round((data.total / data.count) * 10) / 10,
+      responden: data.count,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   // 4. Score Range Histogram (0-20, 21-40, 41-60, 61-80, 81-100)
   const scoreRanges = [
@@ -119,16 +154,41 @@ export function AdminCharts({ submissions }: AdminChartsProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* CHART 1: Donut Chart - Kategori Ketergantungan */}
         <div className="bg-[#FFFFFF] border border-[#E1E5DF] rounded p-6 shadow-sm">
-          <div className="mb-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-[#202522]">
-              Proporsi Kategori Ketergantungan
-            </h3>
-            <p className="text-xs text-[#737A74] mt-0.5">
-              Komposisi mahasiswa berdasarkan rentang indeks skor (N = {submissions.length})
-            </p>
+          <div className="flex items-start justify-between gap-2 mb-4">
+            <div>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-[#202522]">
+                Proporsi Kategori Ketergantungan
+              </h3>
+              <p className="text-xs text-[#737A74] mt-0.5">
+                Komposisi mahasiswa berdasarkan rentang indeks skor (N = {submissions.length})
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleCopyChart("admin-chart-1", "Proporsi Kategori Ketergantungan", "Overview Evaluasi")}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-semibold text-[#174C3C] border border-[#174C3C]/20 bg-[#EBF2EE] hover:bg-[#DCEAE1] transition-all cursor-pointer shrink-0"
+              title="Salin grafik sebagai gambar PNG"
+            >
+              {copiedId === "admin-chart-1" ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-[#174C3C]" />
+                  <span>Tersalin!</span>
+                </>
+              ) : downloadedId === "admin-chart-1" ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-[#174C3C]" />
+                  <span>Terunduh!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5 text-[#174C3C]" />
+                  <span>Salin</span>
+                </>
+              )}
+            </button>
           </div>
 
-          <div className="h-64 w-full">
+          <div id="admin-chart-1" className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -173,16 +233,41 @@ export function AdminCharts({ submissions }: AdminChartsProps) {
 
         {/* CHART 2: Bar Chart - Alat AI Paling Populer */}
         <div className="bg-[#FFFFFF] border border-[#E1E5DF] rounded p-6 shadow-sm">
-          <div className="mb-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-[#202522]">
-              Frekuensi Alat AI Utama
-            </h3>
-            <p className="text-xs text-[#737A74] mt-0.5">
-              Alat kecerdasan buatan yang paling sering diandalkan untuk tugas kuliah
-            </p>
+          <div className="flex items-start justify-between gap-2 mb-4">
+            <div>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-[#202522]">
+                Frekuensi Alat AI Utama
+              </h3>
+              <p className="text-xs text-[#737A74] mt-0.5">
+                Alat kecerdasan buatan yang paling sering diandalkan untuk tugas kuliah
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleCopyChart("admin-chart-2", "Frekuensi Alat AI Utama", "Platform Terpopuler")}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-semibold text-[#174C3C] border border-[#174C3C]/20 bg-[#EBF2EE] hover:bg-[#DCEAE1] transition-all cursor-pointer shrink-0"
+              title="Salin grafik sebagai gambar PNG"
+            >
+              {copiedId === "admin-chart-2" ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-[#174C3C]" />
+                  <span>Tersalin!</span>
+                </>
+              ) : downloadedId === "admin-chart-2" ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-[#174C3C]" />
+                  <span>Terunduh!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5 text-[#174C3C]" />
+                  <span>Salin</span>
+                </>
+              )}
+            </button>
           </div>
 
-          <div className="h-64 w-full">
+          <div id="admin-chart-2" className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={toolChartData} margin={{ top: 10, right: 10, left: -20, bottom: 25 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E1E5DF" />
@@ -220,16 +305,41 @@ export function AdminCharts({ submissions }: AdminChartsProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* CHART 3: Bar Chart - Distribusi Histogram Rentang Skor */}
         <div className="bg-[#FFFFFF] border border-[#E1E5DF] rounded p-6 shadow-sm">
-          <div className="mb-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-[#202522]">
-              Sebaran Rentang Skor (Histogram 0–100)
-            </h3>
-            <p className="text-xs text-[#737A74] mt-0.5">
-              Distribusi kepadatan skor indeks ketergantungan mahasiswa
-            </p>
+          <div className="flex items-start justify-between gap-2 mb-4">
+            <div>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-[#202522]">
+                Sebaran Rentang Skor (Histogram 0–100)
+              </h3>
+              <p className="text-xs text-[#737A74] mt-0.5">
+                Distribusi kepadatan skor indeks ketergantungan mahasiswa
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleCopyChart("admin-chart-3", "Sebaran Rentang Skor (Histogram 0–100)", "Distribusi Skor")}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-semibold text-[#174C3C] border border-[#174C3C]/20 bg-[#EBF2EE] hover:bg-[#DCEAE1] transition-all cursor-pointer shrink-0"
+              title="Salin grafik sebagai gambar PNG"
+            >
+              {copiedId === "admin-chart-3" ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-[#174C3C]" />
+                  <span>Tersalin!</span>
+                </>
+              ) : downloadedId === "admin-chart-3" ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-[#174C3C]" />
+                  <span>Terunduh!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5 text-[#174C3C]" />
+                  <span>Salin</span>
+                </>
+              )}
+            </button>
           </div>
 
-          <div className="h-64 w-full">
+          <div id="admin-chart-3" className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={scoreRanges} margin={{ top: 10, right: 10, left: -20, bottom: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E1E5DF" />
@@ -257,21 +367,46 @@ export function AdminCharts({ submissions }: AdminChartsProps) {
           </div>
         </div>
 
-        {/* CHART 4: Horizontal / Bar Chart - Rata-rata Skor per Peminatan */}
+        {/* CHART 4: Horizontal / Bar Chart - Rata-rata Skor per Angkatan */}
         <div className="bg-[#FFFFFF] border border-[#E1E5DF] rounded p-6 shadow-sm">
-          <div className="mb-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-[#202522]">
-              Rata-rata Skor per Bidang Minat
-            </h3>
-            <p className="text-xs text-[#737A74] mt-0.5">
-              Tingkat ketergantungan AI rata-rata berdasarkan peminatan CS
-            </p>
+          <div className="flex items-start justify-between gap-2 mb-4">
+            <div>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-[#202522]">
+                Rata-rata Skor per Angkatan
+              </h3>
+              <p className="text-xs text-[#737A74] mt-0.5">
+                Tingkat ketergantungan AI rata-rata mahasiswa per angkatan (60–63)
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleCopyChart("admin-chart-4", "Rata-rata Skor per Angkatan", "Analisis Angkatan")}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-semibold text-[#174C3C] border border-[#174C3C]/20 bg-[#EBF2EE] hover:bg-[#DCEAE1] transition-all cursor-pointer shrink-0"
+              title="Salin grafik sebagai gambar PNG"
+            >
+              {copiedId === "admin-chart-4" ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-[#174C3C]" />
+                  <span>Tersalin!</span>
+                </>
+              ) : downloadedId === "admin-chart-4" ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-[#174C3C]" />
+                  <span>Terunduh!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5 text-[#174C3C]" />
+                  <span>Salin</span>
+                </>
+              )}
+            </button>
           </div>
 
-          <div className="h-64 w-full">
+          <div id="admin-chart-4" className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={interestChartData}
+                data={cohortChartData}
                 layout="vertical"
                 margin={{ top: 10, right: 20, left: 20, bottom: 10 }}
               >

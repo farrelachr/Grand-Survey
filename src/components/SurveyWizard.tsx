@@ -29,7 +29,7 @@ export function SurveyWizard({ userEmail }: { userEmail: string }) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [consentGiven, setConsentGiven] = useState(false);
 
-  // Load draft from localStorage on mount
+  // Load draft from localStorage on mount and prefill email if available
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -42,7 +42,13 @@ export function SurveyWizard({ userEmail }: { userEmail: string }) {
     } catch {
       // Ignore localStorage errors
     }
-  }, []);
+    if (userEmail) {
+      setAnswers((prev) => ({
+        ...prev,
+        ipb_email: prev.ipb_email || userEmail,
+      }));
+    }
+  }, [userEmail]);
 
   // Save draft to localStorage on answers change
   useEffect(() => {
@@ -263,6 +269,15 @@ export function SurveyWizard({ userEmail }: { userEmail: string }) {
       {/* Main Question Card */}
       {currentStep < SURVEY_SECTIONS_DATA.length ? (
         <div className="bg-[#FFFFFF] border border-[#E1E5DF] rounded p-4 sm:p-8 shadow-sm space-y-6 sm:space-y-8">
+          {currentSection.sectionId === "journal_case_study" && (
+            <div className="p-4 rounded bg-[#FAF5EB] border border-[#D5A85B]/30 text-xs text-[#636B65] space-y-1.5">
+              <p className="font-bold text-[#202522]">Petunjuk Studi Kasus Deteksi Publikasi Ilmiah:</p>
+              <p className="leading-relaxed">
+                Di bawah ini terdapat 6 sitasi publikasi ilmiah di bidang Computer Science / Remote Sensing. Tiga di antaranya merupakan <strong>jurnal asli (Real)</strong> dan tiga lainnya adalah <strong>jurnal palsu hasil generasi AI (Fake)</strong>. Silakan analisis format penulisan, DOI, nama pengarang, judul, dan nama jurnal untuk mengklasifikasikan setiap kasus.
+              </p>
+            </div>
+          )}
+
           {currentSection.questions.map((q, idx) => (
             <div key={q.id} className="pt-6 first:pt-0 border-t first:border-t-0 border-[#E1E5DF]">
               <div className="mb-4">
@@ -276,9 +291,18 @@ export function SurveyWizard({ userEmail }: { userEmail: string }) {
                   </span>
                 </div>
                 {q.description && (
-                  <p className="mt-1 text-xs text-[#636B65] leading-relaxed">
-                    {q.description}
-                  </p>
+                  q.id.startsWith("journal_case_") ? (
+                    <div className="mt-2.5 p-3.5 bg-[#F7F7F2] border border-[#E1E5DF] rounded text-xs font-mono text-[#202522] leading-relaxed select-text">
+                      <span className="block text-[10px] font-sans font-bold uppercase tracking-wider text-[#737A74] mb-1">
+                        Sitasi Referensi Jurnal:
+                      </span>
+                      {q.description}
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-xs text-[#636B65] leading-relaxed">
+                      {q.description}
+                    </p>
+                  )
                 )}
                 {errors[q.id] && (
                   <p className="mt-2 text-xs text-[#B42318] flex items-center gap-1 font-medium">
