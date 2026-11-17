@@ -8,8 +8,7 @@ import Link from "next/link";
 import { ShieldAlert } from "lucide-react";
 
 export const metadata = {
-  title: "Laporan Grafik Lengkap per Pertanyaan — Grand Survey HIMALKOM 2026",
-  description: "Laporan komprehensif visualisasi grafik per butir pertanyaan Grand Survey HIMALKOM 2026.",
+  title: "Laporan Grafik Lengkap per Pertanyaan — Grand Survey HIMALKOM 2026"
 };
 
 export const dynamic = "force-dynamic";

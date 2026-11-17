@@ -76,15 +76,26 @@ export function validateStudentEmail(email: string): EmailValidationResult {
 }
 
 /**
+ * Default administrators allowlist as fallback if environment variables are not configured.
+ */
+export const DEFAULT_ADMIN_EMAILS = [
+  "farrelalfachrezi@apps.ipb.ac.id",
+  "1a4fadhla@apps.ipb.ac.id",
+  "admin.himalkom@apps.ipb.ac.id",
+];
+
+/**
  * Checks whether an email is an authorized administrator.
  */
 export function isAdminEmail(email?: string | null): boolean {
   if (!email) return false;
   const adminEmailsEnv = process.env.ADMIN_EMAILS || "";
-  const allowedAdmins = adminEmailsEnv
+  const envAdmins = adminEmailsEnv
     .split(",")
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
+
+  const allowedAdmins = Array.from(new Set([...DEFAULT_ADMIN_EMAILS, ...envAdmins]));
 
   return allowedAdmins.includes(email.trim().toLowerCase());
 }
