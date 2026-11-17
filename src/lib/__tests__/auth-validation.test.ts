@@ -68,6 +68,7 @@ describe("Email & Domain Validation - Security Tests", () => {
 
   it("correctly identifies authorized administrators", () => {
     expect(isAdminEmail("admin.himalkom@apps.ipb.ac.id")).toBe(true);
+    expect(isAdminEmail("hamdihakim@apps.ipb.ac.id")).toBe(true);
     expect(isAdminEmail("ketua@ipb.ac.id")).toBe(true);
     expect(isAdminEmail("regular.student@apps.ipb.ac.id")).toBe(false);
     expect(isAdminEmail(null)).toBe(false);

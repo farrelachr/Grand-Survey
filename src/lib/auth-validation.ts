@@ -81,6 +81,7 @@ export function validateStudentEmail(email: string): EmailValidationResult {
 export const DEFAULT_ADMIN_EMAILS = [
   "farrelalfachrezi@apps.ipb.ac.id",
   "1a4fadhla@apps.ipb.ac.id",
+  "hamdihakim@apps.ipb.ac.id",
   "admin.himalkom@apps.ipb.ac.id",
 ];
 
