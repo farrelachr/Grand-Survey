@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Grand Survey HIMALKOM 2026 — AI Dependency Survey Platform",
+  title: "Grand Survey HIMALKOM 2026",
   description: "Analisis Ketergantungan Mahasiswa Program Studi Ilmu Komputer IPB University Angkatan 62 terhadap Artificial Intelligence dalam Pembelajaran dan Aktivitas Akademik.",
   keywords: ["HIMALKOM", "IPB University", "Grand Survey 2026", "Ilmu Komputer", "AI Dependency", "Artificial Intelligence"],
   authors: [{ name: "HIMALKOM IPB University" }],
